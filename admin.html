@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>后台管理 · 曲焱作品集</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px}
+input,textarea,select{background:#1a1a1a;border:1px solid #333;color:#e0e0e0;padding:8px 12px;border-radius:6px;font-size:13px;font-family:inherit;width:100%}
+input:focus,textarea:focus{outline:none;border-color:#666}
+textarea{resize:vertical;min-height:60px;line-height:1.6}
+button{background:#2a2a2a;color:#fff;border:1px solid #444;padding:9px 20px;border-radius:6px;cursor:pointer;font-size:13px;transition:.2s}
+button:hover{background:#3a3a3a}
+button.primary{background:#e8e8e8;color:#0a0a0a;border-color:#e8e8e8;font-weight:600}
+button.primary:hover{background:#fff}
+button.danger{background:transparent;color:#c66;border-color:#633}
+button.danger:hover{background:#3a2020}
+label{display:block;font-size:12px;color:#888;margin-bottom:5px;margin-top:14px}
+.hint{font-size:11px;color:#666;margin-top:4px}
+
+/* 登录 */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.login-card{background:#141414;border:1px solid #2a2a2a;border-radius:14px;padding:40px;width:360px}
+.login-card h1{font-size:20px;font-weight:400;margin-bottom:6px}
+.login-card p{font-size:12px;color:#666;margin-bottom:28px}
+.login-card button{width:100%;margin-top:20px}
+.login-err{color:#e88;font-size:12px;margin-top:10px;display:none}
+
+/* 主布局 */
+.admin{display:none;min-height:100vh}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:200px;background:#111;border-right:1px solid #222;padding:20px 0;overflow-y:auto}
+.sidebar .brand{padding:0 20px 20px;font-size:15px;border-bottom:1px solid #222;margin-bottom:12px}
+.sidebar a{display:block;padding:11px 20px;color:#999;text-decoration:none;font-size:13px;cursor:pointer;transition:.15s;border-left:2px solid transparent}
+.sidebar a:hover{color:#fff;background:#1a1a1a}
+.sidebar a.active{color:#fff;background:#1a1a1a;border-left-color:#e8e8e8}
+.main{margin-left:200px;padding:28px 32px;max-width:860px}
+.main h2{font-size:20px;font-weight:400;margin-bottom:4px}
+.main .sub{font-size:12px;color:#666;margin-bottom:28px}
+.section{background:#111;border:1px solid #222;border-radius:10px;padding:22px;margin-bottom:20px}
+.section h3{font-size:14px;font-weight:500;margin-bottom:16px;color:#ccc}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.save-bar{position:fixed;right:0;bottom:0;left:200px;background:#111;border-top:1px solid #222;padding:14px 32px;display:flex;justify-content:space-between;align-items:center;z-index:50}
+.save-bar .status{font-size:12px;color:#888}
+.save-bar .status.ok{color:#8c8}
+.tab-page{display:none}
+.tab-page.active{display:block}
+
+/* 图片上传 */
+.img-field{display:flex;gap:10px;align-items:flex-start}
+.img-field input{flex:1}
+.img-preview{width:80px;height:54px;background:#1a1a1a;border:1px solid #333;border-radius:6px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#555}
+.img-preview img{width:100%;height:100%;object-fit:cover}
+
+/* 项目卡片编辑 */
+.item-card{background:#161616;border:1px solid #262626;border-radius:8px;padding:16px;margin-bottom:14px}
+.item-card .item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.item-card .item-head strong{font-size:13px;color:#ccc}
+.slide-item .row2{margin-top:0}
+
+/* 统计 */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.stat-box{background:#161616;border:1px solid #262626;border-radius:10px;padding:20px;text-align:center}
+.stat-box .num{font-size:32px;font-weight:300;color:#e8e8e8}
+.stat-box .lbl{font-size:12px;color:#777;margin-top:6px}
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:120px;padding:10px 0}
+.chart-bars .bar{flex:1;background:linear-gradient(180deg,#555,#333);border-radius:3px 3px 0 0;min-height:2px;position:relative}
+.chart-bars .bar:hover{background:#777}
+.chart-days{display:flex;gap:6px;font-size:10px;color:#666;text-align:center}
+.chart-days div{flex:1}
+.page-stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1e1e1e;font-size:13px}
+@media(max-width:768px){
+  .sidebar{width:60px}.sidebar .brand{font-size:0}.sidebar a{font-size:0;padding:14px;text-align:center}
+  .main{margin-left:60px;padding:18px}.save-bar{left:60px}.row2{grid-template-columns:1fr}.stat-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- 登录页 -->
+<div class="login-wrap" id="loginPage">
+  <div class="login-card">
+    <h1>作品集后台管理</h1>
+    <p>请输入管理密码</p>
+    <input type="password" id="loginPwd" placeholder="管理密码" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-err" id="loginErr">密码错误，请重试</div>
+    <button class="primary" onclick="doLogin()">登 录</button>
+  </div>
+</div>
+
+<!-- 管理主界面 -->
+<div class="admin" id="adminPage">
+  <div class="sidebar">
+    <div class="brand">曲焱 · 后台</div>
+    <a class="active" data-tab="text">首页文字</a>
+    <a data-tab="images">图片管理</a>
+    <a data-tab="video">视频管理</a>
+    <a data-tab="works">空间叙事</a>
+    <a data-tab="projects">项目管理</a>
+    <a data-tab="contact">联系方式</a>
+    <a data-tab="stats">访问统计</a>
+    <a onclick="doLogout()" style="margin-top:20px;color:#888">退出登录</a>
+  </div>
+
+  <div class="main">
+
+    <!-- 首页文字 -->
+    <div class="tab-page active" id="tab-text">
+      <h2>首页文字</h2>
+      <div class="sub">修改首页所有文字内容，保存后前台自动更新</div>
+
+      <div class="section">
+        <h3>首屏标题</h3>
+        <label>第一行</label><input id="heroTitle1">
+        <label>第二行</label><input id="heroTitle2">
+      </div>
+
+      <div class="section">
+        <h3>经验介绍（两行）</h3>
+        <label>第一行</label><textarea id="introLine1"></textarea>
+        <label>第二行</label><textarea id="introLine2"></textarea>
+      </div>
+
+      <div class="section">
+        <h3>空间叙事</h3>
+        <label>英文标签</label><input id="worksLabel">
+        <label>标题</label><input id="worksTitle">
+        <label>副标题</label><textarea id="worksSubtitle"></textarea>
+      </div>
+
+      <div class="section">
+        <h3>设计理念</h3>
+        <label>英文标签</label><input id="philoLabel">
+        <label>标题</label><input id="philoTitle">
+        <label>正文</label><textarea id="philoText" style="min-height:90px"></textarea>
+      </div>
+
+      <div class="section">
+        <h3>服务内容</h3>
+        <div id="servicesEdit"></div>
+      </div>
+
+      <div class="section">
+        <h3>工作流程</h3>
+        <label>英文标签</label><input id="procLabel">
+        <label>标题</label><input id="procTitle">
+        <label>正文</label><textarea id="procText" style="min-height:90px"></textarea>
+        <label>按钮文字</label><input id="procBtn">
+      </div>
+
+      <div class="section">
+        <h3>关于我（页脚）</h3>
+        <label>英文标签</label><input id="aboutLabel">
+        <label>标题</label><input id="aboutTitle">
+        <label>段落（每行一段）</label><textarea id="aboutParas" style="min-height:110px"></textarea>
+        <label>按钮文字</label><input id="aboutBtn">
+      </div>
+    </div>
+
+    <!-- 图片管理 -->
+    <div class="tab-page" id="tab-images">
+      <h2>图片管理</h2>
+      <div class="sub">上传图片或填写图片链接，留空则显示渐变占位</div>
+      <div class="section">
+        <h3>首页图片</h3>
+        <label>首屏背景图</label><div id="heroBgImg"></div>
+        <label>设计理念背景图</label><div id="philoImg"></div>
+        <label>工作流程配图</label><div id="procImg"></div>
+        <div class="hint">空间叙事轮播图请在左侧"空间叙事"标签中管理；项目封面图请在"项目管理"标签中管理。</div>
+      </div>
+    </div>
+
+    <!-- 视频管理 -->
+    <div class="tab-page" id="tab-video">
+      <h2>视频管理</h2>
+      <div class="sub">上传视频文件（建议10-30秒，720p，MP4格式，控制在10MB以内）</div>
+      <div class="section">
+        <h3>首页展示视频</h3>
+        <label>视频文件（上传后自动填入，也可填写视频链接）</label>
+        <div class="img-field">
+          <input id="videoSrc" placeholder="留空显示播放按钮占位">
+        </div>
+        <input type="file" id="videoFile" accept="video/mp4,video/webm" style="margin-top:8px">
+        <div class="hint">建议：1080p压缩到720p，时长10-30秒，MP4(H.264)格式</div>
+        <label>视频封面图</label>
+        <div id="videoPoster"></div>
+        <label>视频下方文字</label>
+        <input id="videoLabel">
+      </div>
+    </div>
+
+    <!-- 空间叙事 -->
+    <div class="tab-page" id="tab-works">
+      <h2>空间叙事案例</h2>
+      <div class="sub">管理首页轮播展示的案例，可增删改</div>
+      <div id="worksList"></div>
+      <button onclick="addSlide()" style="margin-top:10px">+ 添加案例</button>
+    </div>
+
+    <!-- 项目管理 -->
+    <div class="tab-page" id="tab-projects">
+      <h2>项目管理</h2>
+      <div class="sub">管理项目列表和项目详情内容</div>
+      <div id="projectsList"></div>
+      <button onclick="addProject()" style="margin-top:10px">+ 添加项目</button>
+    </div>
+
+    <!-- 联系方式 -->
+    <div class="tab-page" id="tab-contact">
+      <h2>联系方式</h2>
+      <div class="sub">修改微信二维码和联系方式，同步更新菜单和弹窗</div>
+      <div class="section">
+        <h3>站点信息</h3>
+        <label>Logo文字</label><input id="siteLogo">
+      </div>
+      <div class="section">
+        <h3>微信二维码</h3>
+        <div id="qrImg"></div>
+        <input type="file" id="qrFile" accept="image/*" style="margin-top:8px">
+        <div class="hint">上传微信二维码图片，建议正方形</div>
+      </div>
+      <div class="section">
+        <h3>联系方式</h3>
+        <label>电话</label><input id="contactPhone">
+        <label>邮箱</label><input id="contactEmail">
+        <label>地址</label><input id="contactAddress">
+      </div>
+    </div>
+
+    <!-- 访问统计 -->
+    <div class="tab-page" id="tab-stats">
+      <h2>访问统计</h2>
+      <div class="sub">网站访问数据</div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="num" id="statTotal">-</div><div class="lbl">总访问量</div></div>
+        <div class="stat-box"><div class="num" id="statToday">-</div><div class="lbl">今日访问</div></div>
+        <div class="stat-box"><div class="num" id="statYesterday">-</div><div class="lbl">昨日访问</div></div>
+      </div>
+      <div class="section">
+        <h3>近14天访问趋势</h3>
+        <div class="chart-bars" id="chartBars"></div>
+        <div class="chart-days" id="chartDays"></div>
+      </div>
+      <div class="section">
+        <h3>页面访问排行</h3>
+        <div id="pageStats"></div>
+      </div>
+      <button onclick="loadStats()" style="margin-top:10px">刷新数据</button>
+    </div>
+
+  </div>
+
+  <div class="save-bar">
+    <div class="status" id="saveStatus">修改后请点击保存</div>
+    <button class="primary" onclick="saveData()">保存全部修改</button>
+  </div>
+</div>
+
+<script>
+var DATA=null;
+var API='api.php';
+
+/* ===== 登录 ===== */
+function doLogin(){
+  var pwd=document.getElementById('loginPwd').value;
+  var form=new FormData();
+  form.append('password',pwd);
+  fetch(API+'?action=login',{method:'POST',body:form})
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(res.ok){
+      document.getElementById('loginPage').style.display='none';
+      document.getElementById('adminPage').style.display='block';
+      loadData();
+    }else{
+      document.getElementById('loginErr').style.display='block';
+    }
+  }).catch(function(){alert('无法连接服务器，请确认已部署到PHP环境（宝塔面板）');});
+}
+function doLogout(){
+  fetch(API+'?action=logout').then(function(){location.reload();});
+}
+function checkLogin(){
+  if(location.protocol==='file:')return; // 本地预览停留在登录页
+  fetch(API+'?action=check').then(function(r){return r.json();})
+  .then(function(res){
+    if(res.loggedIn){
+      document.getElementById('loginPage').style.display='none';
+      document.getElementById('adminPage').style.display='block';
+      loadData();
+    }
+  }).catch(function(){});
+}
+
+/* ===== 标签切换 ===== */
+document.querySelectorAll('.sidebar a[data-tab]').forEach(function(a){
+  a.onclick=function(){
+    document.querySelectorAll('.sidebar a').forEach(function(x){x.classList.remove('active')});
+    a.classList.add('active');
+    document.querySelectorAll('.tab-page').forEach(function(p){p.classList.remove('active')});
+    document.getElementById('tab-'+a.dataset.tab).classList.add('active');
+    if(a.dataset.tab==='stats')loadStats();
+  };
+});
+
+/* ===== 图片上传组件 ===== */
+function imgField(containerId,value,callback){
+  var c=document.getElementById(containerId);
+  c.innerHTML='<div class="img-field"><div class="img-preview">'+(value?'<img src="'+value+'">':'无图')+'</div>'
+    +'<input type="text" value="'+(value||'')+'" placeholder="图片链接或上传">'
+    +'<input type="file" accept="image/*" style="width:auto"></div>';
+  var input=c.querySelector('input[type=text]');
+  var file=c.querySelector('input[type=file]');
+  var preview=c.querySelector('.img-preview');
+  input.oninput=function(){callback(input.value);updatePreview(preview,input.value);};
+  file.onchange=function(){
+    if(file.files[0])uploadFile(file.files[0],function(url){input.value=url;callback(url);updatePreview(preview,url);});
+  };
+}
+function updatePreview(preview,url){
+  preview.innerHTML=url?'<img src="'+url+'">':'无图';
+}
+function uploadFile(file,cb){
+  var form=new FormData();
+  form.append('file',file);
+  var btn=event&&event.target;
+  fetch(API+'?action=upload',{method:'POST',body:form})
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(res.ok)cb(res.url);
+    else alert(res.msg||'上传失败');
+  });
+}
+
+/* ===== 加载数据并填充表单 ===== */
+function loadData(){
+  fetch(API+'?action=get').then(function(r){return r.json();})
+  .then(function(res){
+    if(!res.ok){alert(res.msg||'加载失败');return;}
+    DATA=res.data;
+    fillForms();
+  });
+}
+
+function fillForms(){
+  var h=DATA.home,c=DATA.site.contact;
+  // 首页文字
+  document.getElementById('heroTitle1').value=h.hero.title1;
+  document.getElementById('heroTitle2').value=h.hero.title2;
+  document.getElementById('introLine1').value=h.intro.line1;
+  document.getElementById('introLine2').value=h.intro.line2;
+  document.getElementById('worksLabel').value=h.works.label;
+  document.getElementById('worksTitle').value=h.works.title;
+  document.getElementById('worksSubtitle').value=h.works.subtitle;
+  document.getElementById('philoLabel').value=h.philosophy.label;
+  document.getElementById('philoTitle').value=h.philosophy.title;
+  document.getElementById('philoText').value=h.philosophy.text;
+  document.getElementById('procLabel').value=h.process.label;
+  document.getElementById('procTitle').value=h.process.title;
+  document.getElementById('procText').value=h.process.text;
+  document.getElementById('procBtn').value=h.process.button;
+  document.getElementById('aboutLabel').value=h.about.label;
+  document.getElementById('aboutTitle').value=h.about.title;
+  document.getElementById('aboutParas').value=h.about.paragraphs.join('\n');
+  document.getElementById('aboutBtn').value=h.about.button;
+  // 服务
+  var se=document.getElementById('servicesEdit');
+  se.innerHTML='';
+  h.services.items.forEach(function(s,i){
+    se.innerHTML+='<div class="row2" style="margin-bottom:10px">'
+      +'<div><label>序号</label><input value="'+s.num+'" onchange="DATA.home.services.items['+i+'].num=this.value"></div>'
+      +'<div><label>名称</label><input value="'+s.name+'" onchange="DATA.home.services.items['+i+'].name=this.value"></div>'
+      +'</div><textarea rows="2" style="margin-bottom:14px" onchange="DATA.home.services.items['+i+'].desc=this.value">'+s.desc+'</textarea>';
+  });
+  // 图片
+  imgField('heroBgImg',h.hero.bgImage,function(v){h.hero.bgImage=v;});
+  imgField('philoImg',h.philosophy.image,function(v){h.philosophy.image=v;});
+  imgField('procImg',h.process.image,function(v){h.process.image=v;});
+  // 视频
+  document.getElementById('videoSrc').value=h.video.src;
+  document.getElementById('videoLabel').value=h.video.label;
+  imgField('videoPoster',h.video.poster,function(v){h.video.poster=v;});
+  document.getElementById('videoFile').onchange=function(){
+    if(this.files[0])uploadFile(this.files[0],function(url){document.getElementById('videoSrc').value=url;h.video.src=url;});
+  };
+  document.getElementById('videoSrc').oninput=function(){h.video.src=this.value;};
+  document.getElementById('videoLabel').oninput=function(){h.video.label=this.value;};
+  // 空间叙事
+  renderWorks();
+  // 项目
+  renderProjects();
+  // 联系方式
+  document.getElementById('siteLogo').value=DATA.site.logo;
+  document.getElementById('contactPhone').value=c.phone;
+  document.getElementById('contactEmail').value=c.email;
+  document.getElementById('contactAddress').value=c.address;
+  imgField('qrImg',c.wechatQr,function(v){c.wechatQr=v;});
+  document.getElementById('qrFile').onchange=function(){
+    if(this.files[0])uploadFile(this.files[0],function(url){c.wechatQr=url;fillForms();});
+  };
+}
+
+/* ===== 空间叙事编辑 ===== */
+function renderWorks(){
+  var list=document.getElementById('worksList');
+  list.innerHTML='';
+  DATA.home.works.slides.forEach(function(s,i){
+    var div=document.createElement('div');
+    div.className='item-card slide-item';
+    div.innerHTML='<div class="item-head"><strong>案例 '+(i+1)+'</strong>'
+      +'<button class="danger" onclick="delSlide('+i+')">删除</button></div>'
+      +'<div class="row2"><div><label>英文标签</label><input value="'+s.tag+'" onchange="DATA.home.works.slides['+i+'].tag=this.value"></div>'
+      +'<div><label>标题</label><input value="'+s.title+'" onchange="DATA.home.works.slides['+i+'].title=this.value"></div></div>'
+      +'<label>描述</label><input value="'+s.desc+'" onchange="DATA.home.works.slides['+i+'].desc=this.value">'
+      +'<label>图片</label><div id="slideImg'+i+'"></div>';
+    list.appendChild(div);
+    (function(idx){setTimeout(function(){
+      imgField('slideImg'+idx,DATA.home.works.slides[idx].image,function(v){DATA.home.works.slides[idx].image=v;});
+    },0);})(i);
+  });
+}
+function addSlide(){
+  DATA.home.works.slides.push({tag:'NEW',title:'新案例',desc:'案例描述',image:''});
+  renderWorks();
+}
+function delSlide(i){
+  if(confirm('确定删除这个案例？')){DATA.home.works.slides.splice(i,1);renderWorks();}
+}
+
+/* ===== 项目管理 ===== */
+function renderProjects(){
+  var list=document.getElementById('projectsList');
+  list.innerHTML='';
+  DATA.projects.forEach(function(p,i){
+    var div=document.createElement('div');
+    div.className='item-card';
+    div.innerHTML='<div class="item-head"><strong>'+(i+1)+'. '+p.title+'</strong>'
+      +'<button class="danger" onclick="delProject('+i+')">删除</button></div>'
+      +'<div class="row2">'
+      +'<div><label>项目名称</label><input value="'+p.title+'" onchange="DATA.projects['+i+'].title=this.value"></div>'
+      +'<div><label>分类</label><select onchange="DATA.projects['+i+'].category=this.value;DATA.projects['+i+'].categoryName=this.options[this.selectedIndex].text">'
+      +['interior','architecture','landscape'].map(function(k){
+        var names={interior:'室内',architecture:'建筑',landscape:'景观'};
+        return '<option value="'+k+'"'+(p.category===k?' selected':'')+'>'+names[k]+'</option>';
+      }).join('')+'</select></div></div>'
+      +'<div class="row2">'
+      +'<div><label>地点</label><input value="'+p.location+'" onchange="DATA.projects['+i+'].location=this.value"></div>'
+      +'<div><label>年份</label><input value="'+p.year+'" onchange="DATA.projects['+i+'].year=this.value"></div></div>'
+      +'<label>封面图</label><div id="coverImg'+i+'"></div>'
+      +'<label>项目简介（详情页描述）</label><textarea onchange="DATA.projects['+i+'].detail.description=this.value">'+p.detail.description+'</textarea>'
+      +'<details style="margin-top:10px"><summary style="cursor:pointer;color:#888;font-size:12px">展开详情信息（类型/面积/范围/引言）</summary>'
+      +'<div class="row2" style="margin-top:10px">'
+      +'<div><label>项目类型</label><input value="'+p.detail.info.type+'" onchange="DATA.projects['+i+'].detail.info.type=this.value"></div>'
+      +'<div><label>面积</label><input value="'+p.detail.info.area+'" onchange="DATA.projects['+i+'].detail.info.area=this.value"></div></div>'
+      +'<div class="row2">'
+      +'<div><label>设计范围</label><input value="'+p.detail.info.scope+'" onchange="DATA.projects['+i+'].detail.info.scope=this.value"></div>'
+      +'<div><label>引言作者</label><input value="'+p.detail.quoteAuthor+'" onchange="DATA.projects['+i+'].detail.quoteAuthor=this.value"></div></div>'
+      +'<label>引言文字</label><textarea onchange="DATA.projects['+i+'].detail.quote=this.value">'+p.detail.quote+'</textarea>'
+      +'</details>';
+    list.appendChild(div);
+    (function(idx){setTimeout(function(){
+      imgField('coverImg'+idx,DATA.projects[idx].cover,function(v){DATA.projects[idx].cover=v;});
+    },0);})(i);
+  });
+}
+function addProject(){
+  var nid=Math.max.apply(null,DATA.projects.map(function(p){return p.id;}))+1;
+  DATA.projects.push({
+    id:nid,title:'新项目',category:'interior',categoryName:'室内',location:'',year:new Date().getFullYear()+'',cover:'',
+    detail:{heroImage:'',description:'',info:{type:'',location:'',year:new Date().getFullYear()+'',area:'',scope:''},
+      quote:'',quoteAuthor:'曲焱 · 设计主创',blocks:[{type:'full-image',image:''},{type:'full-image',image:''}]}
+  });
+  renderProjects();
+}
+function delProject(i){
+  if(confirm('确定删除「'+DATA.projects[i].title+'」？')){DATA.projects.splice(i,1);renderProjects();}
+}
+
+/* ===== 收集表单数据 ===== */
+function collectData(){
+  var h=DATA.home,c=DATA.site.contact;
+  h.hero.title1=document.getElementById('heroTitle1').value;
+  h.hero.title2=document.getElementById('heroTitle2').value;
+  h.intro.line1=document.getElementById('introLine1').value;
+  h.intro.line2=document.getElementById('introLine2').value;
+  h.works.label=document.getElementById('worksLabel').value;
+  h.works.title=document.getElementById('worksTitle').value;
+  h.works.subtitle=document.getElementById('worksSubtitle').value;
+  h.philosophy.label=document.getElementById('philoLabel').value;
+  h.philosophy.title=document.getElementById('philoTitle').value;
+  h.philosophy.text=document.getElementById('philoText').value;
+  h.process.label=document.getElementById('procLabel').value;
+  h.process.title=document.getElementById('procTitle').value;
+  h.process.text=document.getElementById('procText').value;
+  h.process.button=document.getElementById('procBtn').value;
+  h.about.label=document.getElementById('aboutLabel').value;
+  h.about.title=document.getElementById('aboutTitle').value;
+  h.about.paragraphs=document.getElementById('aboutParas').value.split('\n').filter(function(x){return x.trim();});
+  h.about.button=document.getElementById('aboutBtn').value;
+  DATA.site.logo=document.getElementById('siteLogo').value;
+  c.phone=document.getElementById('contactPhone').value;
+  c.email=document.getElementById('contactEmail').value;
+  c.address=document.getElementById('contactAddress').value;
+}
+
+/* ===== 保存 ===== */
+function saveData(){
+  collectData();
+  var st=document.getElementById('saveStatus');
+  st.textContent='保存中...';st.className='status';
+  fetch(API+'?action=save',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(DATA)
+  }).then(function(r){return r.json();})
+  .then(function(res){
+    if(res.ok){st.textContent='✓ 已保存，前台已更新  '+new Date().toLocaleTimeString();st.className='status ok';}
+    else{st.textContent='保存失败：'+(res.msg||'未知错误');st.className='status';}
+  }).catch(function(){st.textContent='保存失败：无法连接服务器';});
+}
+
+/* ===== 统计 ===== */
+function loadStats(){
+  fetch(API+'?action=stats').then(function(r){return r.json();})
+  .then(function(res){
+    if(!res.ok)return;
+    var s=res.stats;
+    var today=new Date().toISOString().slice(0,10);
+    var y=new Date(Date.now()-86400000).toISOString().slice(0,10);
+    document.getElementById('statTotal').textContent=s.totalVisits||0;
+    document.getElementById('statToday').textContent=(s.dailyVisits&&s.dailyVisits[today])||0;
+    document.getElementById('statYesterday').textContent=(s.dailyVisits&&s.dailyVisits[y])||0;
+    // 14天柱状图
+    var bars='',days='',maxV=1;
+    var dData=[];
+    for(var i=13;i>=0;i--){
+      var d=new Date(Date.now()-i*86400000).toISOString().slice(0,10);
+      var v=(s.dailyVisits&&s.dailyVisits[d])||0;
+      dData.push({d:d,v:v});
+      if(v>maxV)maxV=v;
+    }
+    dData.forEach(function(item){
+      var h=Math.round(item.v/maxV*100);
+      bars+='<div class="bar" style="height:'+h+'%" title="'+item.d+'：'+item.v+'次"></div>';
+      days+='<div>'+item.d.slice(5)+'</div>';
+    });
+    document.getElementById('chartBars').innerHTML=bars;
+    document.getElementById('chartDays').innerHTML=days;
+    // 页面排行
+    var pages=s.pageVisits||{};
+    var sorted=Object.keys(pages).map(function(k){return{page:k,count:pages[k]};}).sort(function(a,b){return b.count-a.count;});
+    var names={'index.html':'首页','projects.html':'项目列表','project-detail.html':'项目详情'};
+    document.getElementById('pageStats').innerHTML=sorted.length?sorted.map(function(p){
+      return '<div class="page-stat-row"><span>'+(names[p.page]||p.page)+'</span><span>'+p.count+' 次</span></div>';
+    }).join(''):'<div style="color:#666;font-size:12px;padding:10px 0">暂无数据</div>';
+  });
+}
+
+/* 启动 */
+checkLogin();
+</script>
+</body>
+</html>

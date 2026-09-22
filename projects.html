@@ -1,0 +1,498 @@
+<!-- v1.0 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>作品 · 曲焱</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:#0a0a0a;color:#fff;
+  font-family:'Neue Haas Grotesk','Helvetica Neue',Helvetica,'PingFang SC','Microsoft YaHei',Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+/* ===== 顶部导航（同首页） ===== */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:20px 48px;
+  transition:transform 0.3s ease,background 0.3s,padding 0.3s;
+}
+.nav.scrolled{background:rgba(10,10,10,0.85);backdrop-filter:blur(16px);padding:14px 48px}
+.nav.hide{transform:translateY(-100%)}
+.nav .logo{font-size:16px;letter-spacing:3px;font-weight:700}
+.menu-btn{
+  position:absolute;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:10px;
+  padding:10px 28px;border-radius:40px;
+  background:rgba(255,255,255,0.08);backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.15);
+  cursor:pointer;transition:all 0.3s;
+  font-size:12px;letter-spacing:2px;color:#ccc;
+}
+.menu-btn:hover{background:rgba(255,255,255,0.15)}
+.menu-btn .lines{display:flex;flex-direction:column;gap:4px}
+.menu-btn .lines span{width:18px;height:1.5px;background:#ccc;transition:all 0.3s}
+.menu-btn.open .lines span:nth-child(1){transform:translateY(5.5px) rotate(45deg)}
+.menu-btn.open .lines span:nth-child(2){opacity:0}
+.menu-btn.open .lines span:nth-child(3){transform:translateY(-5.5px) rotate(-45deg)}
+
+/* ===== 全屏菜单 ===== */
+.menu-overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(10,10,10,0.92);backdrop-filter:blur(24px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.5s ease;
+}
+.menu-overlay.open{opacity:1;pointer-events:auto}
+.menu-overlay nav{text-align:center}
+.menu-overlay nav a{
+  display:block;font-size:42px;font-weight:700;color:#fff;
+  text-decoration:none;letter-spacing:-1px;margin:8px 0;
+  opacity:0;transform:translateY(20px);
+  transition:opacity 0.4s ease,transform 0.4s ease,color 0.3s;
+}
+.menu-overlay.open nav a{opacity:1;transform:translateY(0)}
+.menu-overlay.open nav a:nth-child(1){transition-delay:0.1s}
+.menu-overlay.open nav a:nth-child(2){transition-delay:0.15s}
+.menu-overlay.open nav a:nth-child(3){transition-delay:0.2s}
+.menu-overlay.open nav a:nth-child(4){transition-delay:0.25s}
+.menu-overlay nav a:hover{color:#888}
+
+/* ===== 页面标题区 ===== */
+.page-header{
+  padding:100px 48px 50px;
+  display:flex;justify-content:space-between;align-items:flex-start;
+}
+.page-header .left .label{
+  font-size:11px;color:#777;letter-spacing:3px;
+  text-transform:uppercase;margin-bottom:20px;
+}
+.page-header .left .title{
+  font-size:36px;font-weight:400;line-height:1.4;
+  max-width:700px;letter-spacing:0.5px;
+  background:linear-gradient(135deg,#787896 0%,#8a7a96 35%,#9a8898 70%,#948a7e 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+/* 筛选器容器（fixed，页眉下方10px） */
+.filter-wrap{
+  position:fixed;top:80px;right:48px;z-index:90;
+  transition:transform 0.3s ease;
+}
+.filter-wrap.up{transform:translateY(var(--up,-70px))}
+.filter-btn{
+  font-size:15px;color:#aaa;letter-spacing:2px;
+  cursor:pointer;padding:8px 12px;transition:color 0.3s;
+  background:none;border:none;
+}
+.filter-btn:hover{color:#fff}
+.filter-dropdown{
+  position:absolute;top:42px;right:0;
+  background:rgba(10,10,10,0.6);backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px;padding:8px 0;
+  opacity:0;pointer-events:none;transition:opacity 0.3s;
+}
+.filter-dropdown.open{opacity:1;pointer-events:auto}
+.filter-dropdown button{
+  display:block;width:100%;text-align:left;
+  padding:10px 24px;font-size:15px;color:#fff;
+  background:none;border:none;cursor:pointer;
+  transition:all 0.2s;letter-spacing:1px;
+}
+.filter-dropdown button:hover{color:#fff;background:rgba(255,255,255,0.08)}
+.filter-dropdown button.active{color:#fff;font-weight:600}
+
+/* ===== 项目网格 ===== */
+.project-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:0;
+  padding:0 0 40px;
+}
+.project-card{
+  position:relative;overflow:hidden;cursor:pointer;display:block;
+  aspect-ratio:4/3;background:#1a1a1a;text-decoration:none;color:#fff;
+}
+.project-card .card-img{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;
+  transition:transform 0.6s cubic-bezier(0.22,1,0.36,1);
+}
+.project-card:hover .card-img{transform:scale(1.05)}
+.project-card .card-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(transparent 50%,rgba(0,0,0,0.7));
+}
+.project-card .card-info{
+  position:absolute;bottom:28px;left:28px;right:28px;z-index:2;
+}
+.project-card .card-info h3{
+  font-size:22px;font-weight:600;letter-spacing:0.5px;
+  margin-bottom:6px;
+}
+.project-card .card-info p{
+  font-size:13px;color:#aaa;letter-spacing:0.5px;
+}
+.project-card.hidden{display:none}
+
+/* 图片占位 */
+.ph-1{background:linear-gradient(135deg,#2a3a4a,#1a2a3a)}
+.ph-2{background:linear-gradient(135deg,#3a2a2a,#2a1a1a)}
+.ph-3{background:linear-gradient(135deg,#2a3a2a,#1a2a1a)}
+.ph-4{background:linear-gradient(135deg,#3a3a2a,#2a2a1a)}
+.ph-5{background:linear-gradient(135deg,#2a2a3a,#1a1a2a)}
+.ph-6{background:linear-gradient(135deg,#3a2a3a,#2a1a2a)}
+
+/* ===== 显示更多 ===== */
+.load-more{
+  text-align:center;padding:50px 0 80px;
+}
+.load-more button{
+  font-size:14px;color:#ccc;letter-spacing:2px;
+  background:none;border:none;border-bottom:1px solid #666;
+  padding:8px 0;cursor:pointer;transition:all 0.3s;
+}
+.load-more button:hover{color:#fff;border-color:#fff}
+
+/* ===== 页脚 ===== */
+.footer{
+  background:#0a0a0a;padding:40px 48px;
+  border-top:1px solid #1a1a1a;
+}
+.footer .logo{font-size:14px;font-weight:700;letter-spacing:3px}
+
+/* ===== 微信浮动按钮 ===== */
+.hero-ai{
+  position:fixed;bottom:30px;right:30px;z-index:99;
+  width:48px;height:48px;border-radius:50%;
+  border:1px solid #555;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all 0.3s;
+  background:rgba(10,10,10,0.6);backdrop-filter:blur(8px);
+}
+.hero-ai:hover{border-color:#aaa;background:rgba(255,255,255,0.08)}
+.hero-ai svg{width:22px;height:22px;stroke:#ccc;fill:none;stroke-width:1.5}
+
+/* ===== 二维码弹窗 ===== */
+.qr-modal{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.3s;
+}
+.qr-modal.open{opacity:1;pointer-events:auto}
+.qr-card{
+  background:#111;border:1px solid #2a2a2a;border-radius:16px;
+  padding:40px;text-align:center;max-width:340px;width:90%;
+  position:relative;
+}
+.qr-card .qr-close{
+  position:absolute;top:14px;right:16px;font-size:20px;color:#888;
+  cursor:pointer;line-height:1;
+}
+.qr-card .qr-close:hover{color:#fff}
+.qr-code{
+  width:200px;height:200px;margin:0 auto 20px;
+  border:2px dashed #444;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  color:#666;font-size:13px;letter-spacing:1px;
+  background:#0a0a0a;
+}
+.qr-card .qr-label{font-size:14px;color:#aaa;letter-spacing:2px;margin-bottom:24px}
+.qr-card .contact-line{
+  font-size:15px;color:#ddd;margin-bottom:10px;letter-spacing:0.5px;
+}
+.qr-card .contact-line span{color:#888;margin-right:8px}
+
+/* ===== 菜单内联系面板 ===== */
+.menu-contact{
+  display:none;text-align:center;
+  transform:translateY(-40px);
+}
+.menu-contact.show{display:block}
+.menu-contact .qr-code{
+  width:180px;height:180px;margin:0 auto 20px;
+}
+.menu-contact .contact-line{
+  font-size:18px;color:#ddd;margin-bottom:12px;letter-spacing:1px;
+}
+.menu-contact .contact-line span{color:#888;margin-right:10px}
+
+/* ===== 移动端 ===== */
+@media(max-width:768px){
+  .nav{padding:14px 16px}
+  .nav .logo{font-size:13px;letter-spacing:1px;white-space:nowrap}
+  .menu-btn{position:static;transform:none;padding:8px 16px;gap:8px}
+  .menu-btn .lines span{width:16px}
+  .page-header{padding:110px 20px 40px;flex-direction:column;gap:20px}
+  .page-header .left .title{font-size:24px}
+  .filter-wrap{right:16px;top:62px}
+  .filter-btn{font-size:14px}
+  .project-grid{grid-template-columns:1fr;padding:0 16px 20px}
+  .project-card .card-info h3{font-size:18px}
+  .footer{padding:30px 20px}
+  .menu-overlay nav a{font-size:32px}
+}
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<nav class="nav">
+  <div class="logo">QU YAN · 曲焱</div>
+  <div class="menu-btn" id="menuBtn">
+    <div class="lines"><span></span><span></span><span></div>
+    <span>MENU</span>
+  </div>
+</nav>
+
+<!-- 全屏菜单 -->
+<div class="menu-overlay" id="menuOverlay">
+  <nav id="menuNav">
+    <a href="index.html">首页</a>
+    <a href="projects.html">项目</a>
+    <a href="javascript:void(0)" id="menuContactBtn">联系</a>
+  </nav>
+  <div class="menu-contact" id="menuContact">
+    <div class="qr-code">微信二维码</div>
+    <div class="contact-line"><span>电话</span>138-0000-0000</div>
+    <div class="contact-line"><span>邮箱</span>quyan@design.com</div>
+    <div class="contact-line"><span>地址</span>吉林市</div>
+  </div>
+</div>
+
+<!-- 二维码弹窗 -->
+<div class="qr-modal" id="qrModal">
+  <div class="qr-card">
+    <div class="qr-close" id="qrClose">×</div>
+    <div class="qr-code">微信二维码</div>
+    <div class="qr-label">微信扫码联系</div>
+    <div class="contact-line"><span>电话</span>138-0000-0000</div>
+    <div class="contact-line"><span>邮箱</span>quyan@design.com</div>
+    <div class="contact-line"><span>地址</span>吉林市</div>
+  </div>
+</div>
+
+<!-- 页面标题区 -->
+<div class="page-header">
+  <div class="left">
+    <div class="label">PROJECTS</div>
+    <div class="title">以空间为载体，以生活为内核——每一个项目都是对人与环境关系的回应。</div>
+  </div>
+</div>
+
+<!-- 筛选器（fixed，页眉下方10px，页眉隐藏时跟随上移但不消失） -->
+<div class="filter-wrap" id="filterWrap">
+  <button class="filter-btn" id="filterBtn">分类 ↓</button>
+  <div class="filter-dropdown" id="filterDropdown">
+    <button class="active" data-filter="all">全部</button>
+    <button data-filter="interior">室内</button>
+    <button data-filter="architecture">建筑</button>
+    <button data-filter="landscape">景观</button>
+  </div>
+</div>
+
+<!-- 项目网格 -->
+<div class="project-grid" id="projectGrid">
+  <a class="project-card" data-category="interior" href="project-detail.html">
+    <div class="card-img ph-1"></div>
+    <div class="card-overlay"></div>
+    <div class="card-info">
+      <h3>酒店大堂全案</h3>
+      <p>吉林 · 2024</p>
+    </div>
+  </a>
+  <a class="project-card" data-category="interior" href="project-detail.html">
+    <div class="card-img ph-2"></div>
+    <div class="card-overlay"></div>
+    <div class="card-info">
+      <h3>住宅全案设计</h3>
+      <p>长春 · 2024</p>
+    </div>
+  </a>
+  <a class="project-card" data-category="architecture" href="project-detail.html">
+    <div class="card-img ph-3"></div>
+    <div class="card-overlay"></div>
+    <div class="card-info">
+      <h3>文化活动中心</h3>
+      <p>吉林 · 2023</p>
+    </div>
+  </a>
+  <a class="project-card" data-category="interior" href="project-detail.html">
+    <div class="card-img ph-4"></div>
+    <div class="card-overlay"></div>
+    <div class="card-info">
+      <h3>办公空间设计</h3>
+      <p>吉林 · 2023</p>
+    </div>
+  </a>
+  <a class="project-card" data-category="landscape" href="project-detail.html">
+    <div class="card-img ph-5"></div>
+    <div class="card-overlay"></div>
+    <div class="card-info">
+      <h3>园区景观规划</h3>
+      <p>吉林 · 2023</p>
+    </div>
+  </a>
+  <a class="project-card" data-category="architecture" href="project-detail.html">
+    <div class="card-img ph-6"></div>
+    <div class="card-overlay"></div>
+    <div class="card-info">
+      <h3>商业综合体改造</h3>
+      <p>吉林 · 2022</p>
+    </div>
+  </a>
+</div>
+
+<!-- 显示更多 -->
+<div class="load-more">
+  <button id="loadMoreBtn">显示更多</button>
+</div>
+
+<!-- 页脚 -->
+<footer class="footer" id="contact">
+  <div class="logo">QU YAN · 曲焱</div>
+</footer>
+
+<!-- 微信浮动按钮 -->
+<div class="hero-ai" id="wechatBtn">
+  <svg viewBox="0 0 24 24"><path d="M8.5 4C4.9 4 2 6.5 2 9.6c0 1.8 1 3.4 2.6 4.5l-.6 2 2.2-1.1c.7.2 1.4.3 2.1.3h.3c-.1-.4-.2-.9-.2-1.3 0-3 2.9-5.4 6.4-5.4h.4C14.9 5.9 11.9 4 8.5 4zM6.5 8.3c.6 0 1 .4 1 1s-.4 1-1 1-1-.4-1-1 .4-1 1-1zm4 0c.6 0 1 .4 1 1s-.4 1-1 1-1-.4-1-1 .4-1 1-1z"/><path d="M22 13.8c0-2.6-2.5-4.7-5.5-4.7s-5.5 2.1-5.5 4.7 2.5 4.7 5.5 4.7c.6 0 1.2-.1 1.8-.2l1.9.9-.5-1.7c1.3-.9 2.3-2.2 2.3-3.7zm-7.3-.6c-.4 0-.7-.3-.7-.7s.3-.7.7-.7.7.3.7.7-.3.7-.7.7zm3.6 0c-.4 0-.7-.3-.7-.7s.3-.7.7-.7.7.3.7.7-.3.7-.7.7z"/></svg>
+</div>
+
+<script>
+// 菜单
+const menuBtn=document.getElementById('menuBtn');
+const menuOverlay=document.getElementById('menuOverlay');
+const menuNav=document.getElementById('menuNav');
+const menuContact=document.getElementById('menuContact');
+menuBtn.addEventListener('click',()=>{
+  menuBtn.classList.toggle('open');
+  menuOverlay.classList.toggle('open');
+  document.body.style.overflow=menuOverlay.classList.contains('open')?'hidden':'';
+  menuNav.style.display='';
+  menuContact.classList.remove('show');
+});
+menuNav.querySelectorAll('a:not(#menuContactBtn)').forEach(a=>{
+  a.addEventListener('click',()=>{
+    menuBtn.classList.remove('open');
+    menuOverlay.classList.remove('open');
+    document.body.style.overflow='';
+  });
+});
+document.getElementById('menuContactBtn').addEventListener('click',()=>{
+  menuNav.style.display='none';
+  menuContact.classList.add('show');
+});
+// 点击菜单毛玻璃空白处关闭
+menuOverlay.addEventListener('click',(e)=>{
+  if(e.target===menuOverlay){
+    menuBtn.classList.remove('open');
+    menuOverlay.classList.remove('open');
+    document.body.style.overflow='';
+    menuNav.style.display='';
+    menuContact.classList.remove('show');
+  }
+});
+
+// 微信二维码弹窗
+const wechatBtn=document.getElementById('wechatBtn');
+const qrModal=document.getElementById('qrModal');
+const qrClose=document.getElementById('qrClose');
+wechatBtn.addEventListener('click',()=>{qrModal.classList.add('open')});
+qrClose.addEventListener('click',()=>{qrModal.classList.remove('open')});
+qrModal.addEventListener('click',(e)=>{if(e.target===qrModal)qrModal.classList.remove('open')});
+
+// 导航滚动：背景变化 + 向下滚页眉隐藏（分类跟随上移不消失）+ 鼠标顶部回显
+const nav=document.querySelector('.nav');
+const filterBtn=document.getElementById('filterBtn');
+const filterWrap=document.getElementById('filterWrap');
+let lastScrollY=window.scrollY;
+let ticking=false;
+// 动态定位分类容器：页眉下方10px
+function positionFilter(){
+  const navH=nav.offsetHeight;
+  filterWrap.style.top=(navH+10)+'px';
+  // 页眉隐藏时上移距离 = 页眉高度，分类停到顶部10px处
+  filterWrap.style.setProperty('--up',(-navH)+'px');
+}
+function updateNav(){
+  const y=window.scrollY;
+  // 背景变化
+  if(y>80) nav.classList.add('scrolled');
+  else nav.classList.remove('scrolled');
+  positionFilter();
+  // 页眉隐藏/分类跟随上移（加阈值，避免抖动）
+  if(y>120 && y>lastScrollY+5){
+    nav.classList.add('hide');
+    filterWrap.classList.add('up');
+    document.getElementById('filterDropdown').classList.remove('open');
+  }else if(y<lastScrollY-5 || y<120){
+    nav.classList.remove('hide');
+    filterWrap.classList.remove('up');
+  }
+  lastScrollY=y;
+  ticking=false;
+}
+window.addEventListener('scroll',()=>{
+  if(!ticking){
+    requestAnimationFrame(updateNav);
+    ticking=true;
+  }
+});
+window.addEventListener('resize',positionFilter);
+positionFilter();
+// 鼠标移到屏幕最顶边窄条回显页眉（避开分类按钮，防止点击时按钮移位）
+document.addEventListener('mousemove',(e)=>{
+  if(window.scrollY>120){
+    // 鼠标在分类按钮/下拉菜单上时不回显
+    if(filterWrap.contains(e.target)) return;
+    // 仅屏幕最顶边8px窄条触发
+    if(e.clientY<8){
+      nav.classList.remove('hide');
+      filterWrap.classList.remove('up');
+    }
+  }
+});
+
+// 筛选器
+const filterDropdown=document.getElementById('filterDropdown');
+filterBtn.addEventListener('click',()=>{
+  filterDropdown.classList.toggle('open');
+});
+document.addEventListener('click',(e)=>{
+  if(!filterBtn.contains(e.target)&&!filterDropdown.contains(e.target)){
+    filterDropdown.classList.remove('open');
+  }
+});
+filterDropdown.querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    filterDropdown.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const filter=btn.dataset.filter;
+    document.querySelectorAll('.project-card').forEach(card=>{
+      if(filter==='all'||card.dataset.category===filter){
+        card.classList.remove('hidden');
+      }else{
+        card.classList.add('hidden');
+      }
+    });
+    filterDropdown.classList.remove('open');
+  });
+});
+
+// 显示更多（示例：点击后显示提示，实际后台控制数量）
+document.getElementById('loadMoreBtn').addEventListener('click',function(){
+  this.textContent='已加载全部项目';
+  this.style.borderColor='#333';
+  this.style.color='#666';
+  this.style.cursor='default';
+});
+</script>
+<script src="data.js"></script>
+<script src="render.js"></script>
+</body>
+</html>
