@@ -1,0 +1,17 @@
+{
+  "rewrites": [
+    { "source": "/projects", "destination": "/projects.html" },
+    { "source": "/project/:id", "destination": "/project-detail.html?id=:id" },
+    { "source": "/admin", "destination": "/admin.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache, must-revalidate" }]
+    },
+    {
+      "source": "/uploads/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ]
+}

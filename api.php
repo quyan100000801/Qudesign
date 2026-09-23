@@ -1,8 +1,8 @@
 <?php
 /* ============================================
-   曲焱作品集 · 后端API
-   适用于宝塔面板 + PHP 7.4+
-   后台默认密码：admin123（请及时修改下方密码）
+   QU YAN · 曲焱 · 后端API
+   适用于phpStudy + PHP 7.4+
+   后台密码：admin123（在下方配置里修改）
    ============================================ */
 
 // ===== 配置（修改这里改密码）=====
@@ -26,9 +26,22 @@ $action = $_GET['action'] ?? $_POST['action'] ?? '';
 function readData() {
     if (!file_exists(DATA_FILE)) return null;
     $content = file_get_contents(DATA_FILE);
-    // 提取 window.SITE_DATA = { ... }; 中的JSON
-    if (preg_match('/window\.SITE_DATA\s*=\s*(\{.*?\});\s*$/s', $content, $m)) {
-        $data = json_decode($m[1], true);
+
+    // 提取 window.SITE_DATA = { ... }; 中的JSON（贪婪匹配，匹配到最后一个};）
+    if (preg_match('/window\.SITE_DATA\s*=\s*(\{.*\})\s*;\s*$/s', $content, $m)) {
+        $jsonStr = trim($m[1]);
+        $data = json_decode($jsonStr, true);
+        if ($data === null) {
+            // 如果标准JSON解析失败，尝试清理注释和无引号属性名
+            $jsonStr2 = $jsonStr;
+            // 去掉多行注释
+            $jsonStr2 = preg_replace('/\/\*.*?\*\//s', '', $jsonStr2);
+            // 去掉单行注释
+            $jsonStr2 = preg_replace('/\/\/.*$/m', '', $jsonStr2);
+            // 给属性名加双引号：{ 或 , 后面的标识符加引号
+            $jsonStr2 = preg_replace('/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/', '$1"$2":', $jsonStr2);
+            $data = json_decode($jsonStr2, true);
+        }
         return $data;
     }
     return null;
@@ -39,6 +52,18 @@ function writeData($data) {
     $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     $content = "/* 站点数据 · 由后台管理自动生成，请勿手动修改 */\nwindow.SITE_DATA = " . $json . ";\n";
     return file_put_contents(DATA_FILE, $content) !== false;
+}
+
+/* ===== 递归收集数据中所有 uploads 引用（按文件名，平铺） ===== */
+function collectUploads($node, array &$set) {
+    if (is_string($node)) {
+        if (strpos($node, 'uploads/') === 0) {
+            $path = preg_split('/[?#]/', $node)[0];
+            $set[basename($path)] = true;
+        }
+    } elseif (is_array($node)) {
+        foreach ($node as $v) collectUploads($v, $set);
+    }
 }
 
 /* ===== 读取统计 ===== */
@@ -62,7 +87,6 @@ function checkAuth() {
 
 /* ===== 路由 ===== */
 switch ($action) {
-
     // 登录
     case 'login':
         $password = $_POST['password'] ?? '';
@@ -111,8 +135,22 @@ switch ($action) {
         if ($old && isset($old['stats'])) {
             $data['stats'] = $old['stats'];
         }
+        // 保存前收集旧引用
+        $oldRefs = [];
+        if ($old) collectUploads($old, $oldRefs);
+
         if (writeData($data)) {
-            echo json_encode(['ok' => true]);
+            // 保存后收集新引用，删除被替换、不再使用的旧文件
+            $newRefs = [];
+            collectUploads($data, $newRefs);
+            $deleted = [];
+            foreach ($oldRefs as $fname => $_) {
+                if (!isset($newRefs[$fname])) {
+                    $fpath = UPLOAD_DIR . $fname;
+                    if (is_file($fpath) && @unlink($fpath)) $deleted[] = $fname;
+                }
+            }
+            echo json_encode(['ok' => true, 'deletedCount' => count($deleted), 'deleted' => $deleted]);
         } else {
             echo json_encode(['ok' => false, 'msg' => '写入失败，请检查data.js文件权限（设为755或777）']);
         }

@@ -2,12 +2,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<base href="/">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>酒店大堂全案 · 曲焱</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
+img{-webkit-user-drag:none;-moz-user-drag:none;user-drag:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}
+html{scroll-behavior:auto}
 body{
   background:#0a0a0a;color:#fff;
   font-family:'Neue Haas Grotesk','Helvetica Neue',Helvetica,'PingFang SC','Microsoft YaHei',Arial,sans-serif;
@@ -127,25 +129,30 @@ body{
   font-size:15px;color:#ddd;letter-spacing:0.5px;
 }
 
-/* 全宽大图 */
+/* 全宽大图（按原比例显示，竖图限高一屏居中） */
 .full-img{
-  width:100%;aspect-ratio:16/9;
-  background-size:cover;background-position:center;
+  width:100%;
 }
+.full-img img{
+  display:block;max-width:100%;max-height:100vh;
+  width:auto;height:auto;margin:0 auto;
+}
+.img-placeholder{width:100%;aspect-ratio:4/3}
+.full-img .img-placeholder{aspect-ratio:16/9}
 
 /* 图文交错区 */
 .gallery{
-  padding:80px 48px;
-  max-width:1400px;margin:0 auto;
+  padding:34px 32px;
+  max-width:1500px;margin:0 auto;
 }
 .gallery .row{
-  display:grid;gap:30px;margin-bottom:30px;
+  display:grid;gap:28px;margin-bottom:0;
   align-items:center;
 }
-.gallery .row.left-img{grid-template-columns:2fr 1fr}
-.gallery .row.right-img{grid-template-columns:1fr 2fr}
-.gallery .row .img{
-  aspect-ratio:4/3;background-size:cover;background-position:center;
+.gallery .row.left-img{grid-template-columns:3fr 1fr}
+.gallery .row.right-img{grid-template-columns:1fr 3fr}
+.gallery .row .img img{
+  width:100%;height:auto;display:block;
 }
 .gallery .row .text{
   font-size:15px;line-height:1.8;color:#aaa;font-weight:300;
@@ -156,10 +163,10 @@ body{
 }
 /* 半宽双图 */
 .gallery .pair{
-  display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-bottom:30px;
+  display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:0;
 }
-.gallery .pair .img{
-  aspect-ratio:4/3;background-size:cover;background-position:center;
+.gallery .pair .img img{
+  width:100%;height:auto;display:block;
 }
 
 /* 引言区 */
@@ -312,7 +319,7 @@ body{
   .hero .hero-info h1{font-size:32px}
   .project-intro{grid-template-columns:1fr;padding:50px 20px 40px;gap:30px}
   .project-intro .meta{border-left:none;border-top:1px solid #333;padding-left:0;padding-top:20px}
-  .gallery{padding:50px 20px}
+  .gallery{padding:26px 18px}
   .gallery .row.left-img,.gallery .row.right-img{grid-template-columns:1fr}
   .gallery .pair{grid-template-columns:1fr}
   .quote-section{padding:60px 20px}
@@ -337,8 +344,8 @@ body{
 <!-- 全屏菜单 -->
 <div class="menu-overlay" id="menuOverlay">
   <nav id="menuNav">
-    <a href="index.html">首页</a>
-    <a href="projects.html">项目</a>
+    <a href="/">首页</a>
+    <a href="projects">项目</a>
     <a href="javascript:void(0)" id="menuContactBtn">联系</a>
   </nav>
   <div class="menu-contact" id="menuContact">
@@ -398,7 +405,7 @@ body{
       </div>
       <div class="row">
         <div class="label">设计范围</div>
-        <div class="value">方案设计 / 施工图深化 / 软装搭配</div>
+        <div class="value">方案设计 / 软装搭配</div>
       </div>
     </div>
   </section>
@@ -440,16 +447,16 @@ body{
   <div class="full-img ph-2"></div>
   </div><!-- /detail-blocks -->
 
-  <!-- 页脚（含关于我） -->
+  <!-- 页脚（含关于我们） -->
   <footer class="footer" id="contact">
     <div class="footer-about">
       <div class="section-label">ABOUT</div>
-      <h2>关于我</h2>
-      <p>室内设计师，深耕室内全案设计与施工图深化多年。</p>
-      <p>相信好的设计不只是好看，更要好用、好施工、好落地。</p>
-      <p>从空间规划到节点细节，从效果呈现到图纸交付，用专业能力把设计想法变成可施工的现实。</p>
+      <h2>关于我们</h2>
+      <p>我们是一支跨专业设计团队，由建筑、景观、室内及服务内容相关专业设计师组成，专注于空间的整体营造。</p>
+      <p>我们以团队协作的方式工作——建筑师把控整体格局，景观师协调自然环境，室内设计师打磨生活细节，各专业无缝衔接。</p>
+      <p>相信好的设计不只是好看，更要好用、好落地。团队的力量，让每一个想法都能被充分论证、精准实现。</p>
       <div class="divider"></div>
-      <a class="cta-btn" href="projects.html">更多项目</a>
+      <a class="cta-btn" href="projects">更多项目</a>
     </div>
     <div class="footer-bottom">
       <div class="logo">QU YAN · 曲焱</div>
@@ -468,6 +475,41 @@ body{
 </div>
 
 <script>
+// ===== 自定义平滑滚轮滚动 =====
+const SCROLL_SPEED = 0.9;
+const SCROLL_SMOOTH = 0.1;
+let currentScrollY = window.scrollY;
+let targetScrollY = window.scrollY;
+let smoothRAF = null;
+function smoothScrollLoop(){
+  currentScrollY += (targetScrollY - currentScrollY) * SCROLL_SMOOTH;
+  if(Math.abs(targetScrollY - currentScrollY) < 0.5){
+    currentScrollY = targetScrollY;
+    window.scrollTo(0, currentScrollY);
+    smoothRAF = null;
+    return;
+  }
+  window.scrollTo(0, currentScrollY);
+  smoothRAF = requestAnimationFrame(smoothScrollLoop);
+}
+window.addEventListener('wheel', function(e){
+  if(Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+  e.preventDefault();
+  targetScrollY += e.deltaY * SCROLL_SPEED;
+  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+  targetScrollY = Math.max(0, Math.min(targetScrollY, maxScroll));
+  if(!smoothRAF){
+    currentScrollY = window.scrollY;
+    smoothRAF = requestAnimationFrame(smoothScrollLoop);
+  }
+}, { passive: false });
+window.addEventListener('scroll', function(){
+  if(!smoothRAF){
+    targetScrollY = window.scrollY;
+    currentScrollY = window.scrollY;
+  }
+});
+
 // 菜单
 const menuBtn=document.getElementById('menuBtn');
 const menuOverlay=document.getElementById('menuOverlay');

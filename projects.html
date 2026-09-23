@@ -2,12 +2,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<base href="/">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>作品 · 曲焱</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
+img{-webkit-user-drag:none;-moz-user-drag:none;user-drag:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}
+html{scroll-behavior:auto}
 body{
   background:#0a0a0a;color:#fff;
   font-family:'Neue Haas Grotesk','Helvetica Neue',Helvetica,'PingFang SC','Microsoft YaHei',Arial,sans-serif;
@@ -93,6 +95,7 @@ body{
 .filter-btn:hover{color:#fff}
 .filter-dropdown{
   position:absolute;top:42px;right:0;
+  min-width:160px;
   background:rgba(10,10,10,0.6);backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);
   border:1px solid rgba(255,255,255,0.1);
@@ -101,8 +104,8 @@ body{
 }
 .filter-dropdown.open{opacity:1;pointer-events:auto}
 .filter-dropdown button{
-  display:block;width:100%;text-align:left;
-  padding:10px 24px;font-size:15px;color:#fff;
+  display:block;width:100%;text-align:left;white-space:nowrap;
+  padding:10px 24px;font-size:14px;color:#aaa;
   background:none;border:none;cursor:pointer;
   transition:all 0.2s;letter-spacing:1px;
 }
@@ -139,6 +142,7 @@ body{
   font-size:13px;color:#aaa;letter-spacing:0.5px;
 }
 .project-card.hidden{display:none}
+.project-card.page-hidden{display:none}
 
 /* 图片占位 */
 .ph-1{background:linear-gradient(135deg,#2a3a4a,#1a2a3a)}
@@ -253,8 +257,8 @@ body{
 <!-- 全屏菜单 -->
 <div class="menu-overlay" id="menuOverlay">
   <nav id="menuNav">
-    <a href="index.html">首页</a>
-    <a href="projects.html">项目</a>
+    <a href="/">首页</a>
+    <a href="projects">项目</a>
     <a href="javascript:void(0)" id="menuContactBtn">联系</a>
   </nav>
   <div class="menu-contact" id="menuContact">
@@ -285,14 +289,15 @@ body{
   </div>
 </div>
 
-<!-- 筛选器（fixed，页眉下方10px，页眉隐藏时跟随上移但不消失） -->
+<!-- 筛选器（下拉菜单，fixed，页眉下方10px，页眉隐藏时跟随上移但不消失） -->
 <div class="filter-wrap" id="filterWrap">
   <button class="filter-btn" id="filterBtn">分类 ↓</button>
   <div class="filter-dropdown" id="filterDropdown">
     <button class="active" data-filter="all">全部</button>
-    <button data-filter="interior">室内</button>
-    <button data-filter="architecture">建筑</button>
-    <button data-filter="landscape">景观</button>
+    <button data-filter="architecture">建筑设计</button>
+    <button data-filter="landscape">景观设计</button>
+    <button data-filter="interior-residential">室内私宅</button>
+    <button data-filter="interior-commercial">室内商业</button>
   </div>
 </div>
 
@@ -364,6 +369,41 @@ body{
 </div>
 
 <script>
+// ===== 自定义平滑滚轮滚动 =====
+const SCROLL_SPEED = 0.9;
+const SCROLL_SMOOTH = 0.1;
+let currentScrollY = window.scrollY;
+let targetScrollY = window.scrollY;
+let smoothRAF = null;
+function smoothScrollLoop(){
+  currentScrollY += (targetScrollY - currentScrollY) * SCROLL_SMOOTH;
+  if(Math.abs(targetScrollY - currentScrollY) < 0.5){
+    currentScrollY = targetScrollY;
+    window.scrollTo(0, currentScrollY);
+    smoothRAF = null;
+    return;
+  }
+  window.scrollTo(0, currentScrollY);
+  smoothRAF = requestAnimationFrame(smoothScrollLoop);
+}
+window.addEventListener('wheel', function(e){
+  if(Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+  e.preventDefault();
+  targetScrollY += e.deltaY * SCROLL_SPEED;
+  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+  targetScrollY = Math.max(0, Math.min(targetScrollY, maxScroll));
+  if(!smoothRAF){
+    currentScrollY = window.scrollY;
+    smoothRAF = requestAnimationFrame(smoothScrollLoop);
+  }
+}, { passive: false });
+window.addEventListener('scroll', function(){
+  if(!smoothRAF){
+    targetScrollY = window.scrollY;
+    currentScrollY = window.scrollY;
+  }
+});
+
 // 菜单
 const menuBtn=document.getElementById('menuBtn');
 const menuOverlay=document.getElementById('menuOverlay');
@@ -458,7 +498,7 @@ document.addEventListener('mousemove',(e)=>{
   }
 });
 
-// 筛选器
+// 筛选器（下拉菜单）
 const filterDropdown=document.getElementById('filterDropdown');
 filterBtn.addEventListener('click',()=>{
   filterDropdown.classList.toggle('open');
@@ -484,12 +524,10 @@ filterDropdown.querySelectorAll('button').forEach(btn=>{
   });
 });
 
-// 显示更多（示例：点击后显示提示，实际后台控制数量）
+// 显示更多（每次增加8个）
 document.getElementById('loadMoreBtn').addEventListener('click',function(){
-  this.textContent='已加载全部项目';
-  this.style.borderColor='#333';
-  this.style.color='#666';
-  this.style.cursor='default';
+  if(this.disabled) return;
+  if(window.loadMoreProjects) window.loadMoreProjects();
 });
 </script>
 <script src="data.js"></script>

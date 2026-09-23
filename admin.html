@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>后台管理 · 曲焱作品集</title>
+<title>后台管理 · QU YAN · 曲焱</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0a0a0a;color:#e0e0e0;font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px}
@@ -51,12 +51,44 @@ label{display:block;font-size:12px;color:#888;margin-bottom:5px;margin-top:14px}
 .img-field input{flex:1}
 .img-preview{width:80px;height:54px;background:#1a1a1a;border:1px solid #333;border-radius:6px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#555}
 .img-preview img{width:100%;height:100%;object-fit:cover}
+.native-file{display:none}
+.img-field .up-btn{width:auto;padding:8px 14px;white-space:nowrap;font-size:12px;flex-shrink:0}
 
 /* 项目卡片编辑 */
 .item-card{background:#161616;border:1px solid #262626;border-radius:8px;padding:16px;margin-bottom:14px}
-.item-card .item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.item-card .item-head strong{font-size:13px;color:#ccc}
+.item-card .item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;cursor:pointer;user-select:none}
+.item-card .item-head strong{font-size:13px;color:#ccc;flex:1}
+.item-card .item-head::before{content:'▸';color:#666;margin-right:8px;font-size:11px;transition:transform 0.2s}
+.item-card:not(.collapsed) .item-head::before{transform:rotate(90deg)}
+.item-card.collapsed .item-body{display:none}
+.item-card.collapsed{padding-bottom:16px}
+.item-card .drag-handle{cursor:grab;color:#777;padding:0 10px;font-size:16px;line-height:1;user-select:none}
+.item-card .drag-handle:hover{color:#c9a86a}
+.item-card .drag-handle:active{cursor:grabbing}
+.item-card.dragging{opacity:.4}
+.item-card.drag-over-top{box-shadow:inset 0 3px 0 0 #c9a86a}
+.item-card.drag-over-bottom{box-shadow:inset 0 -3px 0 0 #c9a86a}
 .slide-item .row2{margin-top:0}
+
+/* 模块化编辑 */
+.block-add-bar button{padding:6px 12px;font-size:12px;background:#1a1a1a;border-color:#333}
+.block-add-bar button:hover{background:#2a2a2a;border-color:#555}
+.blocks-editor .item-card{padding:12px}
+.blocks-editor .item-head strong{font-size:12px}
+.blocks-editor .item-head button{padding:4px 10px;font-size:11px}
+
+/* 弹窗模态框 */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;
+  display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal-box{
+  background:#141414;border:1px solid #2a2a2a;border-radius:14px;
+  padding:28px;width:520px;max-height:85vh;overflow-y:auto;
+}
+.modal-box h3{font-size:16px;font-weight:500;margin-bottom:20px;color:#ccc}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}
 
 /* 统计 */
 .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
@@ -80,7 +112,7 @@ label{display:block;font-size:12px;color:#888;margin-bottom:5px;margin-top:14px}
 <!-- 登录页 -->
 <div class="login-wrap" id="loginPage">
   <div class="login-card">
-    <h1>作品集后台管理</h1>
+    <h1>QU YAN · 曲焱 · 后台管理</h1>
     <p>请输入管理密码</p>
     <input type="password" id="loginPwd" placeholder="管理密码" onkeydown="if(event.key==='Enter')doLogin()">
     <div class="login-err" id="loginErr">密码错误，请重试</div>
@@ -149,7 +181,7 @@ label{display:block;font-size:12px;color:#888;margin-bottom:5px;margin-top:14px}
       </div>
 
       <div class="section">
-        <h3>关于我（页脚）</h3>
+        <h3>关于我们（页脚）</h3>
         <label>英文标签</label><input id="aboutLabel">
         <label>标题</label><input id="aboutTitle">
         <label>段落（每行一段）</label><textarea id="aboutParas" style="min-height:110px"></textarea>
@@ -162,8 +194,13 @@ label{display:block;font-size:12px;color:#888;margin-bottom:5px;margin-top:14px}
       <h2>图片管理</h2>
       <div class="sub">上传图片或填写图片链接，留空则显示渐变占位</div>
       <div class="section">
-        <h3>首页图片</h3>
-        <label>首屏背景图</label><div id="heroBgImg"></div>
+        <h3>首屏轮播图</h3>
+        <div class="hint">多张图片自动轮播（5秒切换），鼠标移动有聚光灯效果。只填一张则静态显示。</div>
+        <div id="heroSlidesEdit"></div>
+        <button onclick="addHeroSlide()" style="margin-top:10px">+ 添加轮播图</button>
+      </div>
+      <div class="section">
+        <h3>其他页面图片</h3>
         <label>设计理念背景图</label><div id="philoImg"></div>
         <label>工作流程配图</label><div id="procImg"></div>
         <div class="hint">空间叙事轮播图请在左侧"空间叙事"标签中管理；项目封面图请在"项目管理"标签中管理。</div>
@@ -173,18 +210,12 @@ label{display:block;font-size:12px;color:#888;margin-bottom:5px;margin-top:14px}
     <!-- 视频管理 -->
     <div class="tab-page" id="tab-video">
       <h2>视频管理</h2>
-      <div class="sub">上传视频文件（建议10-30秒，720p，MP4格式，控制在10MB以内）</div>
+      <div class="sub">上传多个视频，自动轮换播放（建议10-30秒，720p，MP4格式，控制在10MB以内）</div>
       <div class="section">
-        <h3>首页展示视频</h3>
-        <label>视频文件（上传后自动填入，也可填写视频链接）</label>
-        <div class="img-field">
-          <input id="videoSrc" placeholder="留空显示播放按钮占位">
-        </div>
-        <input type="file" id="videoFile" accept="video/mp4,video/webm" style="margin-top:8px">
-        <div class="hint">建议：1080p压缩到720p，时长10-30秒，MP4(H.264)格式</div>
-        <label>视频封面图</label>
-        <div id="videoPoster"></div>
-        <label>视频下方文字</label>
+        <h3>首页展示视频（自动轮换）</h3>
+        <div id="videoList"></div>
+        <button class="primary" style="margin-top:12px" onclick="addVideo()">+ 添加视频</button>
+        <label style="margin-top:20px">视频下方文字</label>
         <input id="videoLabel">
       </div>
     </div>
@@ -193,16 +224,16 @@ label{display:block;font-size:12px;color:#888;margin-bottom:5px;margin-top:14px}
     <div class="tab-page" id="tab-works">
       <h2>空间叙事案例</h2>
       <div class="sub">管理首页轮播展示的案例，可增删改</div>
+      <button onclick="addSlide()" class="primary" style="margin-bottom:16px">+ 添加案例</button>
       <div id="worksList"></div>
-      <button onclick="addSlide()" style="margin-top:10px">+ 添加案例</button>
     </div>
 
     <!-- 项目管理 -->
     <div class="tab-page" id="tab-projects">
       <h2>项目管理</h2>
-      <div class="sub">管理项目列表和项目详情内容</div>
+      <div class="sub">管理项目列表和项目详情内容（含模块化图文编辑）</div>
+      <button onclick="addProject()" class="primary" style="margin-bottom:16px">+ 添加项目</button>
       <div id="projectsList"></div>
-      <button onclick="addProject()" style="margin-top:10px">+ 添加项目</button>
     </div>
 
     <!-- 联系方式 -->
@@ -257,6 +288,41 @@ label{display:block;font-size:12px;color:#888;margin-bottom:5px;margin-top:14px}
 </div>
 
 <script>
+// ===== 自定义平滑滚轮滚动 =====
+const SCROLL_SPEED = 0.9;
+const SCROLL_SMOOTH = 0.1;
+let currentScrollY = window.scrollY;
+let targetScrollY = window.scrollY;
+let smoothRAF = null;
+function smoothScrollLoop(){
+  currentScrollY += (targetScrollY - currentScrollY) * SCROLL_SMOOTH;
+  if(Math.abs(targetScrollY - currentScrollY) < 0.5){
+    currentScrollY = targetScrollY;
+    window.scrollTo(0, currentScrollY);
+    smoothRAF = null;
+    return;
+  }
+  window.scrollTo(0, currentScrollY);
+  smoothRAF = requestAnimationFrame(smoothScrollLoop);
+}
+window.addEventListener('wheel', function(e){
+  if(Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+  e.preventDefault();
+  targetScrollY += e.deltaY * SCROLL_SPEED;
+  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+  targetScrollY = Math.max(0, Math.min(targetScrollY, maxScroll));
+  if(!smoothRAF){
+    currentScrollY = window.scrollY;
+    smoothRAF = requestAnimationFrame(smoothScrollLoop);
+  }
+}, { passive: false });
+window.addEventListener('scroll', function(){
+  if(!smoothRAF){
+    targetScrollY = window.scrollY;
+    currentScrollY = window.scrollY;
+  }
+});
+
 var DATA=null;
 var API='api.php';
 
@@ -307,14 +373,20 @@ document.querySelectorAll('.sidebar a[data-tab]').forEach(function(a){
 function imgField(containerId,value,callback){
   var c=document.getElementById(containerId);
   c.innerHTML='<div class="img-field"><div class="img-preview">'+(value?'<img src="'+value+'">':'无图')+'</div>'
-    +'<input type="text" value="'+(value||'')+'" placeholder="图片链接或上传">'
-    +'<input type="file" accept="image/*" style="width:auto"></div>';
+    +'<input type="text" value="'+(value||'')+'" placeholder="图片链接，或点右侧上传">'
+    +'<button type="button" class="up-btn">上传文件</button>'
+    +'<input type="file" accept="image/*" class="native-file"></div>';
   var input=c.querySelector('input[type=text]');
   var file=c.querySelector('input[type=file]');
+  var btn=c.querySelector('.up-btn');
   var preview=c.querySelector('.img-preview');
   input.oninput=function(){callback(input.value);updatePreview(preview,input.value);};
+  btn.onclick=function(){file.click();};
   file.onchange=function(){
-    if(file.files[0])uploadFile(file.files[0],function(url){input.value=url;callback(url);updatePreview(preview,url);});
+    if(file.files[0]){
+      btn.textContent='上传中…';
+      uploadFile(file.files[0],function(url){input.value=url;callback(url);updatePreview(preview,url);btn.textContent='重新上传';});
+    }
   };
 }
 function updatePreview(preview,url){
@@ -323,7 +395,6 @@ function updatePreview(preview,url){
 function uploadFile(file,cb){
   var form=new FormData();
   form.append('file',file);
-  var btn=event&&event.target;
   fetch(API+'?action=upload',{method:'POST',body:form})
   .then(function(r){return r.json();})
   .then(function(res){
@@ -370,20 +441,22 @@ function fillForms(){
     se.innerHTML+='<div class="row2" style="margin-bottom:10px">'
       +'<div><label>序号</label><input value="'+s.num+'" onchange="DATA.home.services.items['+i+'].num=this.value"></div>'
       +'<div><label>名称</label><input value="'+s.name+'" onchange="DATA.home.services.items['+i+'].name=this.value"></div>'
-      +'</div><textarea rows="2" style="margin-bottom:14px" onchange="DATA.home.services.items['+i+'].desc=this.value">'+s.desc+'</textarea>';
+      +'</div><textarea rows="2" style="margin-bottom:10px" onchange="DATA.home.services.items['+i+'].desc=this.value">'+s.desc+'</textarea>'
+      +'<label style="font-size:12px;color:#888;margin-bottom:6px;display:block">卡片背景图</label>'
+      +'<div id="serviceImg'+i+'" style="margin-bottom:20px"></div>';
+  });
+  // 初始化服务内容图片上传
+  h.services.items.forEach(function(s,i){
+    imgField('serviceImg'+i,s.image,function(v){s.image=v;});
   });
   // 图片
-  imgField('heroBgImg',h.hero.bgImage,function(v){h.hero.bgImage=v;});
+  renderHeroSlides();
   imgField('philoImg',h.philosophy.image,function(v){h.philosophy.image=v;});
   imgField('procImg',h.process.image,function(v){h.process.image=v;});
   // 视频
-  document.getElementById('videoSrc').value=h.video.src;
+  if(!h.video.videos) h.video.videos = [];
   document.getElementById('videoLabel').value=h.video.label;
-  imgField('videoPoster',h.video.poster,function(v){h.video.poster=v;});
-  document.getElementById('videoFile').onchange=function(){
-    if(this.files[0])uploadFile(this.files[0],function(url){document.getElementById('videoSrc').value=url;h.video.src=url;});
-  };
-  document.getElementById('videoSrc').oninput=function(){h.video.src=this.value;};
+  renderVideoList();
   document.getElementById('videoLabel').oninput=function(){h.video.label=this.value;};
   // 空间叙事
   renderWorks();
@@ -398,6 +471,91 @@ function fillForms(){
   document.getElementById('qrFile').onchange=function(){
     if(this.files[0])uploadFile(this.files[0],function(url){c.wechatQr=url;fillForms();});
   };
+}
+
+/* ===== 通用弹窗 ===== */
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+}
+// 点击弹窗背景关闭
+document.addEventListener('click',function(e){
+  if(e.target.classList.contains('modal-overlay')){
+    e.target.classList.remove('open');
+  }
+});
+
+/* ===== 首屏轮播图编辑 ===== */
+function renderHeroSlides(){
+  var container=document.getElementById('heroSlidesEdit');
+  if(!container)return;
+  var slides=DATA.home.hero.slides;
+  if(!slides){slides=[];DATA.home.hero.slides=slides;}
+  container.innerHTML='';
+  slides.forEach(function(s,i){
+    var div=document.createElement('div');
+    div.className='item-card';
+    div.innerHTML='<div class="item-head"><strong>轮播图 '+(i+1)+'</strong>'
+      +'<button class="danger" onclick="delHeroSlide('+i+')">删除</button></div>'
+      +'<label>图片</label><div id="heroSlideImg'+i+'"></div>';
+    container.appendChild(div);
+    (function(idx){setTimeout(function(){
+      imgField('heroSlideImg'+idx,DATA.home.hero.slides[idx].image,function(v){DATA.home.hero.slides[idx].image=v;});
+    },0);})(i);
+  });
+}
+function addHeroSlide(){
+  DATA.home.hero.slides.push({image:'',title:''});
+  renderHeroSlides();
+}
+function delHeroSlide(i){
+  if(confirm('确定删除这张轮播图？')){
+    DATA.home.hero.slides.splice(i,1);
+    renderHeroSlides();
+  }
+}
+
+/* ===== 视频管理（多视频轮换） ===== */
+function renderVideoList(){
+  var list=document.getElementById('videoList');
+  list.innerHTML='';
+  var videos=DATA.home.video.videos;
+  if(!videos || !videos.length){
+    list.innerHTML='<div style="color:#666;font-size:13px;padding:10px 0">暂无视频，点击下方"添加视频"按钮上传</div>';
+    return;
+  }
+  videos.forEach(function(v,i){
+    var item=document.createElement('div');
+    item.style.cssText='border:1px solid #2a2a2a;padding:16px;margin-bottom:12px;border-radius:8px';
+    item.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+      +'<span style="font-size:13px;color:#aaa">视频 '+(i+1)+'</span>'
+      +'<button onclick="removeVideo('+i+')" style="background:none;border:none;color:#e88;cursor:pointer;font-size:12px">删除</button></div>'
+      +'<label>视频文件（上传后自动填入，也可填链接）</label>'
+      +'<input value="'+(v.src||'')+'" placeholder="留空则跳过该视频" oninput="DATA.home.video.videos['+i+'].src=this.value" style="margin-bottom:8px">'
+      +'<input type="file" accept="video/mp4,video/webm" onchange="uploadVideoFile(this,'+i+')" style="margin-bottom:10px">'
+      +'<label>封面图（可选）</label>'
+      +'<div id="videoPoster'+i+'"></div>';
+    list.appendChild(item);
+    imgField('videoPoster'+i,v.poster,function(val){v.poster=val;});
+  });
+}
+function addVideo(){
+  if(!DATA.home.video.videos) DATA.home.video.videos=[];
+  if(DATA.home.video.videos.length>=5){alert('最多添加5个视频');return;}
+  DATA.home.video.videos.push({src:'',poster:''});
+  renderVideoList();
+}
+function removeVideo(idx){
+  if(!confirm('确定删除该视频？'))return;
+  DATA.home.video.videos.splice(idx,1);
+  renderVideoList();
+}
+function uploadVideoFile(input,idx){
+  if(input.files[0]){
+    uploadFile(input.files[0],function(url){
+      DATA.home.video.videos[idx].src=url;
+      renderVideoList();
+    });
+  }
 }
 
 /* ===== 空间叙事编辑 ===== */
@@ -420,7 +578,20 @@ function renderWorks(){
   });
 }
 function addSlide(){
-  DATA.home.works.slides.push({tag:'NEW',title:'新案例',desc:'案例描述',image:''});
+  // 打开弹窗
+  document.getElementById('newSlideTag').value='';
+  document.getElementById('newSlideTitle').value='';
+  document.getElementById('newSlideDesc').value='';
+  imgField('newSlideImg','',function(v){window._newSlideImg=v;});
+  window._newSlideImg='';
+  document.getElementById('slideModal').classList.add('open');
+}
+function confirmAddSlide(){
+  var tag=document.getElementById('newSlideTag').value||'NEW';
+  var title=document.getElementById('newSlideTitle').value||'新案例';
+  var desc=document.getElementById('newSlideDesc').value||'案例描述';
+  DATA.home.works.slides.push({tag:tag,title:title,desc:desc,image:window._newSlideImg||''});
+  closeModal('slideModal');
   renderWorks();
 }
 function delSlide(i){
@@ -433,14 +604,16 @@ function renderProjects(){
   list.innerHTML='';
   DATA.projects.forEach(function(p,i){
     var div=document.createElement('div');
-    div.className='item-card';
-    div.innerHTML='<div class="item-head"><strong>'+(i+1)+'. '+p.title+'</strong>'
-      +'<button class="danger" onclick="delProject('+i+')">删除</button></div>'
+    div.className='item-card collapsed';
+    div.innerHTML='<div class="item-head" onclick="this.parentElement.classList.toggle(\'collapsed\')"><strong>'+(i+1)+'. '+p.title+'</strong>'
+      +'<span class="drag-handle" title="按住拖拽排序" onclick="event.stopPropagation()" onmousedown="dragHandleDown(this)" onmouseup="dragHandleUp(this)">⠿</span>'
+      +'<button class="danger" onclick="event.stopPropagation();delProject('+i+')">删除</button></div>'
+      +'<div class="item-body">'
       +'<div class="row2">'
       +'<div><label>项目名称</label><input value="'+p.title+'" onchange="DATA.projects['+i+'].title=this.value"></div>'
       +'<div><label>分类</label><select onchange="DATA.projects['+i+'].category=this.value;DATA.projects['+i+'].categoryName=this.options[this.selectedIndex].text">'
-      +['interior','architecture','landscape'].map(function(k){
-        var names={interior:'室内',architecture:'建筑',landscape:'景观'};
+      +['architecture','landscape','interior-residential','interior-commercial'].map(function(k){
+        var names={architecture:'建筑设计',landscape:'景观设计','interior-residential':'室内私宅','interior-commercial':'室内商业'};
         return '<option value="'+k+'"'+(p.category===k?' selected':'')+'>'+names[k]+'</option>';
       }).join('')+'</select></div></div>'
       +'<div class="row2">'
@@ -456,24 +629,203 @@ function renderProjects(){
       +'<div><label>设计范围</label><input value="'+p.detail.info.scope+'" onchange="DATA.projects['+i+'].detail.info.scope=this.value"></div>'
       +'<div><label>引言作者</label><input value="'+p.detail.quoteAuthor+'" onchange="DATA.projects['+i+'].detail.quoteAuthor=this.value"></div></div>'
       +'<label>引言文字</label><textarea onchange="DATA.projects['+i+'].detail.quote=this.value">'+p.detail.quote+'</textarea>'
-      +'</details>';
+      +'</details>'
+      +'<details style="margin-top:10px" class="blocks-details"><summary style="cursor:pointer;color:#888;font-size:12px">详情页内容模块（图文积木编辑）</summary>'
+      +'<div class="blocks-editor" id="blocksEditor'+i+'" style="margin-top:12px"></div>'
+      +'<div class="block-add-bar" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'
+      +'<button onclick="addBlock('+i+',\'full-image\')">+ 全宽大图</button>'
+      +'<button onclick="addBlock('+i+',\'text-image\')">+ 左文右图</button>'
+      +'<button onclick="addBlock('+i+',\'image-text\')">+ 左图右文</button>'
+      +'<button onclick="addBlock('+i+',\'double-image\')">+ 双图并排</button>'
+      +'<button onclick="addBlock('+i+',\'quote\')">+ 引言</button>'
+      +'</div></details></div>';
+    div.dataset.index=i;
+    bindProjectDrag(div);
     list.appendChild(div);
     (function(idx){setTimeout(function(){
       imgField('coverImg'+idx,DATA.projects[idx].cover,function(v){DATA.projects[idx].cover=v;});
+      renderBlocks(idx);
     },0);})(i);
   });
 }
 function addProject(){
+  // 打开弹窗
+  document.getElementById('newProjTitle').value='';
+  document.getElementById('newProjCategory').value='architecture';
+  document.getElementById('newProjYear').value=new Date().getFullYear()+'';
+  document.getElementById('newProjLocation').value='';
+  document.getElementById('newProjDesc').value='';
+  imgField('newProjCover','',function(v){window._newProjCover=v;});
+  window._newProjCover='';
+  document.getElementById('projectModal').classList.add('open');
+}
+function confirmAddProject(){
+  var title=document.getElementById('newProjTitle').value||'新项目';
+  var cat=document.getElementById('newProjCategory').value;
+  var catNames={architecture:'建筑设计',landscape:'景观设计','interior-residential':'室内私宅','interior-commercial':'室内商业'};
   var nid=Math.max.apply(null,DATA.projects.map(function(p){return p.id;}))+1;
   DATA.projects.push({
-    id:nid,title:'新项目',category:'interior',categoryName:'室内',location:'',year:new Date().getFullYear()+'',cover:'',
-    detail:{heroImage:'',description:'',info:{type:'',location:'',year:new Date().getFullYear()+'',area:'',scope:''},
-      quote:'',quoteAuthor:'曲焱 · 设计主创',blocks:[{type:'full-image',image:''},{type:'full-image',image:''}]}
+    id:nid,title:title,category:cat,categoryName:catNames[cat],
+    location:document.getElementById('newProjLocation').value||'',
+    year:document.getElementById('newProjYear').value||new Date().getFullYear()+'',
+    cover:window._newProjCover||'',
+    detail:{
+      heroImage:'',
+      description:document.getElementById('newProjDesc').value||'',
+      info:{type:'',location:'',year:new Date().getFullYear()+'',area:'',scope:''},
+      quote:'',quoteAuthor:'曲焱 · 设计主创',
+      blocks:[{type:'full-image',image:''},{type:'full-image',image:''}]
+    }
   });
+  closeModal('projectModal');
   renderProjects();
 }
 function delProject(i){
   if(confirm('确定删除「'+DATA.projects[i].title+'」？')){DATA.projects.splice(i,1);renderProjects();}
+}
+
+/* ===== 项目拖拽排序 ===== */
+var dragSrcIndex=-1;
+function dragHandleDown(h){var c=h.closest('.item-card');if(c)c.setAttribute('draggable','true');}
+function dragHandleUp(h){var c=h.closest('.item-card');if(c)c.removeAttribute('draggable');}
+function cleanupProjectDrag(){
+  dragSrcIndex=-1;
+  var list=document.getElementById('projectsList');
+  if(list)Array.prototype.forEach.call(list.children,function(c){c.classList.remove('dragging','drag-over-top','drag-over-bottom');c.removeAttribute('draggable');});
+}
+function bindProjectDrag(div){
+  div.addEventListener('dragstart',function(e){
+    dragSrcIndex=parseInt(this.dataset.index,10);
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed='move';
+    try{e.dataTransfer.setData('text/plain',String(dragSrcIndex));}catch(_){}
+  });
+  div.addEventListener('dragover',function(e){
+    e.preventDefault();
+    e.dataTransfer.dropEffect='move';
+    var rect=this.getBoundingClientRect();
+    var after=(e.clientY-rect.top)>rect.height/2;
+    var list=document.getElementById('projectsList');
+    Array.prototype.forEach.call(list.children,function(c){c.classList.remove('drag-over-top','drag-over-bottom');});
+    this.classList.add(after?'drag-over-bottom':'drag-over-top');
+  });
+  div.addEventListener('dragleave',function(){
+    this.classList.remove('drag-over-top','drag-over-bottom');
+  });
+  div.addEventListener('drop',function(e){
+    e.preventDefault();e.stopPropagation();
+    var target=parseInt(this.dataset.index,10);
+    var src=dragSrcIndex;
+    var rect=this.getBoundingClientRect();
+    var after=(e.clientY-rect.top)>rect.height/2;
+    cleanupProjectDrag();
+    if(isNaN(src)||src===target){renderProjects();return;}
+    var moved=DATA.projects.splice(src,1)[0];
+    var curTarget=src<target?target-1:target;
+    var insertAt=after?curTarget+1:curTarget;
+    DATA.projects.splice(insertAt,0,moved);
+    renderProjects();
+  });
+  div.addEventListener('dragend',function(){cleanupProjectDrag();});
+}
+
+/* ===== 项目详情模块化编辑 ===== */
+var BLOCK_NAMES={
+  'full-image':'全宽大图',
+  'text-image':'左文右图',
+  'image-text':'左图右文',
+  'double-image':'双图并排',
+  'quote':'引言'
+};
+
+function renderBlocks(pIdx){
+  var container=document.getElementById('blocksEditor'+pIdx);
+  if(!container)return;
+  var blocks=DATA.projects[pIdx].detail.blocks;
+  if(!blocks){blocks=[];DATA.projects[pIdx].detail.blocks=blocks;}
+  container.innerHTML='';
+  if(blocks.length===0){
+    container.innerHTML='<div style="color:#666;font-size:12px;padding:10px 0;text-align:center;border:1px dashed #333;border-radius:6px">暂无内容模块，点击下方按钮添加</div>';
+    return;
+  }
+  blocks.forEach(function(b,bIdx){
+    var card=document.createElement('div');
+    card.className='item-card';
+    card.style.background='#1a1a1a';
+    card.style.marginBottom='10px';
+    var head='<div class="item-head"><strong>模块 '+(bIdx+1)+' · '+BLOCK_NAMES[b.type]+'</strong>'
+      +'<div style="display:flex;gap:6px">'
+      +'<button onclick="moveBlock('+pIdx+','+bIdx+',-1)" '+(bIdx===0?'disabled style="opacity:0.3;cursor:not-allowed"':'')+'>↑</button>'
+      +'<button onclick="moveBlock('+pIdx+','+bIdx+',1)" '+(bIdx===blocks.length-1?'disabled style="opacity:0.3;cursor:not-allowed"':'')+'>↓</button>'
+      +'<button class="danger" onclick="delBlock('+pIdx+','+bIdx+')">删除</button>'
+      +'</div></div>';
+    var body='';
+    switch(b.type){
+      case 'full-image':
+        body='<label>图片</label><div id="blockImg_'+pIdx+'_'+bIdx+'"></div>';
+        break;
+      case 'text-image':
+      case 'image-text':
+        body='<label>小标题</label><input value="'+(b.title||'')+'" onchange="DATA.projects['+pIdx+'].detail.blocks['+bIdx+'].title=this.value">'
+          +'<label>正文</label><textarea onchange="DATA.projects['+pIdx+'].detail.blocks['+bIdx+'].text=this.value">'+(b.text||'')+'</textarea>'
+          +'<label>图片</label><div id="blockImg_'+pIdx+'_'+bIdx+'"></div>';
+        break;
+      case 'double-image':
+        body='<div class="row2"><div><label>左图</label><div id="blockImg1_'+pIdx+'_'+bIdx+'"></div></div>'
+          +'<div><label>右图</label><div id="blockImg2_'+pIdx+'_'+bIdx+'"></div></div></div>';
+        break;
+      case 'quote':
+        body='<label>引言文字</label><textarea onchange="DATA.projects['+pIdx+'].detail.blocks['+bIdx+'].text=this.value">'+(b.text||'')+'</textarea>'
+          +'<label>作者</label><input value="'+(b.author||'')+'" onchange="DATA.projects['+pIdx+'].detail.blocks['+bIdx+'].author=this.value">';
+        break;
+    }
+    card.innerHTML=head+body;
+    container.appendChild(card);
+    (function(pi,bi,block){
+      setTimeout(function(){
+        if(block.type==='full-image'||block.type==='text-image'||block.type==='image-text'){
+          imgField('blockImg_'+pi+'_'+bi,block.image,function(v){DATA.projects[pi].detail.blocks[bi].image=v;});
+        }else if(block.type==='double-image'){
+          imgField('blockImg1_'+pi+'_'+bi,block.image1,function(v){DATA.projects[pi].detail.blocks[bi].image1=v;});
+          imgField('blockImg2_'+pi+'_'+bi,block.image2,function(v){DATA.projects[pi].detail.blocks[bi].image2=v;});
+        }
+      },0);
+    })(pIdx,bIdx,b);
+  });
+}
+
+function addBlock(pIdx,type){
+  var blocks=DATA.projects[pIdx].detail.blocks;
+  if(!blocks){blocks=[];DATA.projects[pIdx].detail.blocks=blocks;}
+  var newBlock={type:type};
+  if(type==='text-image'||type==='image-text'){
+    newBlock.title='小标题';newBlock.text='正文内容';newBlock.image='';
+  }else if(type==='full-image'){
+    newBlock.image='';
+  }else if(type==='double-image'){
+    newBlock.image1='';newBlock.image2='';
+  }else if(type==='quote'){
+    newBlock.text='引言文字';newBlock.author='曲焱 · 设计主创';
+  }
+  blocks.push(newBlock);
+  renderBlocks(pIdx);
+}
+
+function delBlock(pIdx,bIdx){
+  if(confirm('确定删除这个内容模块？')){
+    DATA.projects[pIdx].detail.blocks.splice(bIdx,1);
+    renderBlocks(pIdx);
+  }
+}
+
+function moveBlock(pIdx,bIdx,dir){
+  var blocks=DATA.projects[pIdx].detail.blocks;
+  var target=bIdx+dir;
+  if(target<0||target>=blocks.length)return;
+  var tmp=blocks[bIdx];
+  blocks[bIdx]=blocks[target];
+  blocks[target]=tmp;
+  renderBlocks(pIdx);
 }
 
 /* ===== 收集表单数据 ===== */
@@ -557,7 +909,49 @@ function loadStats(){
 }
 
 /* 启动 */
-checkLogin();
+// checkLogin();  // 注释掉自动登录检查，每次都显示登录框
 </script>
+
+<!-- 添加案例弹窗 -->
+<div class="modal-overlay" id="slideModal">
+  <div class="modal-box">
+    <h3>添加空间叙事案例</h3>
+    <label>英文标签</label><input id="newSlideTag" placeholder="如：ARCHITECTURE">
+    <label>标题</label><input id="newSlideTitle" placeholder="如：文化建筑">
+    <label>描述</label><input id="newSlideDesc" placeholder="如：建筑设计 · 从概念到落地">
+    <label>图片</label><div id="newSlideImg"></div>
+    <div class="modal-actions">
+      <button onclick="closeModal('slideModal')">取消</button>
+      <button class="primary" onclick="confirmAddSlide()">确认添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 添加项目弹窗 -->
+<div class="modal-overlay" id="projectModal">
+  <div class="modal-box">
+    <h3>添加新项目</h3>
+    <label>项目名称</label><input id="newProjTitle" placeholder="如：酒店大堂全案">
+    <div class="row2">
+      <div><label>分类</label>
+        <select id="newProjCategory">
+          <option value="architecture">建筑设计</option>
+          <option value="landscape">景观设计</option>
+          <option value="interior-residential">室内私宅</option>
+          <option value="interior-commercial">室内商业</option>
+        </select>
+      </div>
+      <div><label>年份</label><input id="newProjYear" placeholder="2024"></div>
+    </div>
+    <label>地点</label><input id="newProjLocation" placeholder="如：吉林市">
+    <label>封面图</label><div id="newProjCover"></div>
+    <label>项目简介</label><textarea id="newProjDesc" rows="3" placeholder="简要描述项目内容..."></textarea>
+    <div class="modal-actions">
+      <button onclick="closeModal('projectModal')">取消</button>
+      <button class="primary" onclick="confirmAddProject()">确认添加</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
