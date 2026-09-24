@@ -16,11 +16,11 @@ window.SITE_DATA = {
             "bgImage": "",
             "slides": [
                 {
-                    "image": "uploads\/20260923_111203_90556c70.png",
+                    "image": "uploads\/20260923_111203_90556c70.jpg",
                     "title": ""
                 },
                 {
-                    "image": "uploads\/20260923_111206_f6cc6bda.png",
+                    "image": "uploads\/20260923_111206_f6cc6bda.jpg",
                     "title": ""
                 },
                 {
@@ -76,7 +76,7 @@ window.SITE_DATA = {
                     "tag": "ARCHITECTURE",
                     "title": "半山咖啡馆",
                     "desc": "建筑设计 · 木石之间",
-                    "image": "uploads\/20260923_214619_4162214f.png"
+                    "image": "uploads\/20260923_214619_4162214f.jpg"
                 },
                 {
                     "tag": "RESIDENTIAL",
