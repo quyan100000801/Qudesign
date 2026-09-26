@@ -311,11 +311,7 @@ body{
 .video-label{position:absolute;top:32px;left:24px;font-size:12px;color:#ccc;letter-spacing:3px;text-transform:uppercase;z-index:3;text-shadow:0 1px 4px rgba(0,0,0,0.5)}
 
 /* ===== 作品轮播 ===== */
-.work-carousel{
-  width:100%;height:520px;position:relative;margin-top:56px;
-  overflow:hidden;background:#0a0a0a;
-  border:1px solid #222;box-sizing:border-box;
-}
+.work-carousel{width:calc(100% + 120px);margin-left:-60px;height:520px;position:relative;margin-top:56px;overflow:hidden;background:#0a0a0a;border:none;box-sizing:border-box;}
 .work-carousel .slide{
   position:absolute;inset:0;opacity:0;transition:opacity 0.8s;
 }
@@ -564,7 +560,7 @@ body{
   .hero-title h1{font-size:38px}
   .section{padding:60px 20px}
   .section-title{font-size:32px}
-  .work-carousel{height:320px}
+  .work-carousel{width:calc(100% + 40px);margin-left:-20px;height:320px}
   .work-carousel .slide-info{left:20px;bottom:20px}
   .work-carousel .slide-info h3{font-size:20px}
   .direction-grid{grid-template-columns:1fr}

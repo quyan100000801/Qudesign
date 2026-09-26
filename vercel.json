@@ -2,6 +2,7 @@
   "rewrites": [
     { "source": "/projects", "destination": "/projects.html" },
     { "source": "/project/:id", "destination": "/project-detail.html?id=:id" },
+    { "source": "/p/:slug", "destination": "/page.html?slug=:slug" },
     { "source": "/admin", "destination": "/admin.html" }
   ],
   "headers": [

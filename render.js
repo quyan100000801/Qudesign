@@ -511,10 +511,88 @@
     }catch(e){}
   }
 
+  /* ===== 隐藏单页渲染（和详情页同版式） ===== */
+  function renderPage(){
+    var slug = '';
+    var m = window.location.pathname.match(/\/p\/([^\/\?#]+)/);
+    if(m){ slug = m[1]; }
+    else {
+      var params = new URLSearchParams(window.location.search);
+      slug = params.get('slug') || '';
+    }
+    if(!D.pages) D.pages = [];
+    var page = D.pages.find(function(p){return p.slug===slug;});
+    if(!page){
+      document.body.innerHTML = '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;color:#fff;font-family:sans-serif"><h1 style="font-size:64px;margin-bottom:16px">404</h1><p style="color:#888">页面不存在或已删除</p><a href="/" style="color:#fff;margin-top:24px">返回首页</a></div>';
+      return;
+    }
+    if(!page.detail) return;
+    var d = page.detail;
+    document.title = page.title + ' · QU YAN · 曲焱';
+    txt('.hero-info h1', page.title);
+    var heroMeta = document.querySelector('.hero-info p');
+    if(heroMeta) heroMeta.style.display = 'none';
+    if(d.heroImage) bg('.hero-img', d.heroImage);
+    txt('.project-intro .desc', d.description);
+    var rows = document.querySelectorAll('.meta .row');
+    var infoData = [
+      {label:'内容类型', value:d.info ? d.info.type : ''},
+      {label:'日期', value:d.info ? d.info.date : ''}
+    ];
+    rows.forEach(function(row,i){
+      if(infoData[i]){
+        row.querySelector('.label').textContent = infoData[i].label;
+        row.querySelector('.value').textContent = infoData[i].value;
+        row.style.display = '';
+      }else{
+        row.style.display = 'none';
+      }
+    });
+    var blocksContainer = document.querySelector('.detail-blocks');
+    if(blocksContainer && d.blocks){
+      var bh = '';
+      var phIdx = 1;
+      function ph(){ return 'ph-'+((phIdx++ %6)+1); }
+      function imgTag(url){
+        return url ? '<img src="'+url+'" alt="">' : '<div class="img-placeholder '+ph()+'"></div>';
+      }
+      d.blocks.forEach(function(b){
+        switch(b.type){
+          case 'full-image':
+            bh += '<div class="full-img">'+imgTag(b.image)+'</div>';
+            break;
+          case 'text-image':
+            bh += '<section class="gallery"><div class="row right-img">'
+              + '<div class="text"><div class="label">'+(b.title||'')+'</div>'+(b.text||'')+'</div>'
+              + '<div class="img">'+imgTag(b.image)+'</div></div></section>';
+            break;
+          case 'image-text':
+            bh += '<section class="gallery"><div class="row left-img">'
+              + '<div class="img">'+imgTag(b.image)+'</div>'
+              + '<div class="text"><div class="label">'+(b.title||'')+'</div>'+(b.text||'')+'</div></div></section>';
+            break;
+          case 'double-image':
+            bh += '<section class="gallery"><div class="pair">'
+              + '<div class="img">'+imgTag(b.image1)+'</div>'
+              + '<div class="img">'+imgTag(b.image2)+'</div></div></section>';
+            break;
+          case 'quote':
+            bh += '<section class="quote-section"><blockquote>'+b.text+'</blockquote>'
+              + '<div class="author">—— '+(b.author||'')+'</div></section>';
+            break;
+        }
+      });
+      blocksContainer.innerHTML = bh;
+    }
+    var prevLink = document.querySelector('.nav-arrow-fixed.left');
+    var nextLink = document.querySelector('.nav-arrow-fixed.right');
+    if(prevLink) prevLink.style.display = 'none';
+    if(nextLink) nextLink.style.display = 'none';
+  }
+
   /* ===== 启动 ===== */
   function init(){
     renderCommon();
-    // 禁止图片下载：右键菜单和拖拽（不影响文字复制）
     document.addEventListener('contextmenu', function(e){
       if(e.target.tagName === 'IMG') e.preventDefault();
     });
@@ -522,7 +600,9 @@
       if(e.target.tagName === 'IMG') e.preventDefault();
     });
     var path = location.pathname;
-    if((path.indexOf('projects')>-1 && path.indexOf('/project/')===-1)){
+    if(path.indexOf('/p/')>-1){
+      renderPage();
+    }else if((path.indexOf('projects')>-1 && path.indexOf('/project/')===-1)){
       renderProjectsPage();
     }else if(path.indexOf('project-detail')>-1 || path.indexOf('/project/')>-1){
       renderDetailPage();

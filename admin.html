@@ -129,6 +129,7 @@ label{display:block;font-size:12px;color:#888;margin-bottom:5px;margin-top:14px}
     <a data-tab="video">视频管理</a>
     <a data-tab="works">空间叙事</a>
     <a data-tab="projects">项目管理</a>
+    <a data-tab="pages">隐藏单页</a>
     <a data-tab="contact">联系方式</a>
     <a data-tab="stats">访问统计</a>
     <a onclick="doLogout()" style="margin-top:20px;color:#888">退出登录</a>
@@ -258,6 +259,16 @@ label{display:block;font-size:12px;color:#888;margin-bottom:5px;margin-top:14px}
       </div>
     </div>
 
+    <!-- 隐藏单页 -->
+    <div class="tab-page" id="tab-pages">
+      <h2>隐藏单页</h2>
+      <div class="sub">只能通过链接访问的页面，不显示在首页导航。用于方案汇报等临时分享</div>
+      <div class="section">
+        <h3>单页列表</h3>
+        <div id="pagesList"></div>
+        <button class="primary" onclick="addPage()" style="margin-top:10px">+ 新建单页</button>
+      </div>
+    </div>
     <!-- 访问统计 -->
     <div class="tab-page" id="tab-stats">
       <h2>访问统计</h2>
@@ -462,6 +473,7 @@ function fillForms(){
   renderWorks();
   // 项目
   renderProjects();
+  renderPages();
   // 联系方式
   document.getElementById('siteLogo').value=DATA.site.logo;
   document.getElementById('contactPhone').value=c.phone;
@@ -679,9 +691,11 @@ function confirmAddProject(){
   });
   closeModal('projectModal');
   renderProjects();
+  renderPages();
 }
 function delProject(i){
-  if(confirm('确定删除「'+DATA.projects[i].title+'」？')){DATA.projects.splice(i,1);renderProjects();}
+  if(confirm('确定删除「'+DATA.projects[i].title+'」？')){DATA.projects.splice(i,1);renderProjects();
+  renderPages();}
 }
 
 /* ===== 项目拖拽排序 ===== */
@@ -719,12 +733,14 @@ function bindProjectDrag(div){
     var rect=this.getBoundingClientRect();
     var after=(e.clientY-rect.top)>rect.height/2;
     cleanupProjectDrag();
-    if(isNaN(src)||src===target){renderProjects();return;}
+    if(isNaN(src)||src===target){renderProjects();
+  renderPages();return;}
     var moved=DATA.projects.splice(src,1)[0];
     var curTarget=src<target?target-1:target;
     var insertAt=after?curTarget+1:curTarget;
     DATA.projects.splice(insertAt,0,moved);
     renderProjects();
+  renderPages();
   });
   div.addEventListener('dragend',function(){cleanupProjectDrag();});
 }
@@ -829,6 +845,134 @@ function moveBlock(pIdx,bIdx,dir){
 }
 
 /* ===== 收集表单数据 ===== */
+/* ===== 隐藏单页管理（和项目同版式积木编辑） ===== */
+function genSlug(){
+  var chars='abcdefghjkmnpqrstuvwxyz23456789';
+  var s='';
+  for(var i=0;i<6;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+var PAGE_BLOCK_NAMES={'full-image':'全宽大图','text-image':'左文右图','image-text':'左图右文','double-image':'双图并排','quote':'引言'};
+function renderPages(){
+  if(!DATA.pages) DATA.pages=[];
+  var list=document.getElementById('pagesList');
+  if(!list) return;
+  list.innerHTML='';
+  if(DATA.pages.length===0){
+    list.innerHTML='<div style="color:#666;font-size:13px;padding:10px 0">还没有单页，点下面按钮新建</div>';
+    return;
+  }
+  DATA.pages.forEach(function(p,i){
+    if(!p.detail) p.detail={heroImage:'',description:'',info:{type:'',date:''},blocks:[]};
+    if(!p.detail.blocks) p.detail.blocks=[];
+    var div=document.createElement('div');
+    div.className='item-card collapsed';
+    div.innerHTML='<div class="item-head" onclick="this.parentElement.classList.toggle(\'collapsed\')"><strong>'+(i+1)+'. '+(p.title||'未命名')+'</strong>'
+      +'<button class="danger" onclick="event.stopPropagation();delPage('+i+')">删除</button></div>'
+      +'<div class="item-body">'
+      +'<div style="font-size:12px;color:#6cf;margin-bottom:10px">链接：<a href="/p/'+p.slug+'" target="_blank" style="color:#6cf">quyan.me/p/'+p.slug+'</a> <button onclick="copyLink(\''+p.slug+'\')" style="padding:2px 8px;font-size:11px;margin-left:6px">复制</button></div>'
+      +'<div class="row2">'
+      +'<div><label>页面标题</label><input value="'+(p.title||'')+'" onchange="DATA.pages['+i+'].title=this.value"></div>'
+      +'<div><label>副标题</label><input value="'+(p.subtitle||'')+'" onchange="DATA.pages['+i+'].subtitle=this.value"></div></div>'
+      +'<label>首屏大图</label><div id="pageHeroImg'+i+'"></div>'
+      +'<label>页面描述</label><textarea rows="3" onchange="DATA.pages['+i+'].detail.description=this.value">'+(p.detail.description||'')+'</textarea>'
+      +'<div class="row2">'
+      +'<div><label>左侧标签</label><input value="'+p.detail.info.type+'" onchange="DATA.pages['+i+'].detail.info.type=this.value"></div>'
+      +'<div><label>左侧内容</label><input value="'+p.detail.info.date+'" onchange="DATA.pages['+i+'].detail.info.date=this.value"></div></div>'
+      +'<details style="margin-top:10px"><summary style="cursor:pointer;color:#888;font-size:12px">内容模块（图文积木）</summary>'
+      +'<div class="blocks-editor" id="pageBlocksEditor'+i+'" style="margin-top:12px"></div>'
+      +'<div class="block-add-bar" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'
+      +'<button onclick="addPageBlock('+i+',\'full-image\')">+ 全宽大图</button>'
+      +'<button onclick="addPageBlock('+i+',\'text-image\')">+ 左文右图</button>'
+      +'<button onclick="addPageBlock('+i+',\'image-text\')">+ 左图右文</button>'
+      +'<button onclick="addPageBlock('+i+',\'double-image\')">+ 双图并排</button>'
+      +'<button onclick="addPageBlock('+i+',\'quote\')">+ 引言</button>'
+      +'</div></details></div>';
+    list.appendChild(div);
+    (function(idx){setTimeout(function(){
+      imgField('pageHeroImg'+idx,DATA.pages[idx].detail.heroImage,function(v){DATA.pages[idx].detail.heroImage=v;});
+      renderPageBlocks(idx);
+    },0);})(i);
+  });
+}
+function copyLink(slug){
+  var url=location.origin+'/p/'+slug;
+  navigator.clipboard.writeText(url).then(function(){alert('链接已复制：'+url);});
+}
+function addPage(){
+  if(!DATA.pages) DATA.pages=[];
+  DATA.pages.push({slug:genSlug(),title:'新单页',subtitle:'',detail:{heroImage:'',description:'',info:{type:'',date:''},blocks:[{type:'full-image',image:''}]}});
+  renderPages();
+}
+function delPage(i){
+  if(confirm('确定删除「'+DATA.pages[i].title+'」？链接会立即失效')){DATA.pages.splice(i,1);renderPages();}
+}
+function renderPageBlocks(pIdx){
+  var container=document.getElementById('pageBlocksEditor'+pIdx);
+  if(!container)return;
+  var blocks=DATA.pages[pIdx].detail.blocks;
+  if(!blocks){blocks=[];DATA.pages[pIdx].detail.blocks=blocks;}
+  container.innerHTML='';
+  if(blocks.length===0){
+    container.innerHTML='<div style="color:#666;font-size:12px;padding:10px 0;text-align:center;border:1px dashed #333;border-radius:6px">暂无内容模块</div>';
+    return;
+  }
+  blocks.forEach(function(b,bIdx){
+    var card=document.createElement('div');
+    card.className='item-card';
+    card.style.background='#1a1a1a';
+    card.style.marginBottom='10px';
+    var head='<div class="item-head"><strong>模块 '+(bIdx+1)+' · '+(PAGE_BLOCK_NAMES[b.type]||b.type)+'</strong>'
+      +'<div style="display:flex;gap:6px">'
+      +'<button onclick="movePageBlock('+pIdx+','+bIdx+',-1)" '+(bIdx===0?'disabled style="opacity:0.3;cursor:not-allowed"':'')+'>↑</button>'
+      +'<button onclick="movePageBlock('+pIdx+','+bIdx+',1)" '+(bIdx===blocks.length-1?'disabled style="opacity:0.3;cursor:not-allowed"':'')+'>↓</button>'
+      +'<button class="danger" onclick="delPageBlock('+pIdx+','+bIdx+')">删除</button>'
+      +'</div></div>';
+    var body='';
+    switch(b.type){
+      case 'full-image': body='<label>图片</label><div id="pageBlockImg_'+pIdx+'_'+bIdx+'"></div>'; break;
+      case 'text-image': case 'image-text':
+        body='<label>小标题</label><input value="'+(b.title||'')+'" onchange="DATA.pages['+pIdx+'].detail.blocks['+bIdx+'].title=this.value">'
+          +'<label>正文</label><textarea onchange="DATA.pages['+pIdx+'].detail.blocks['+bIdx+'].text=this.value">'+(b.text||'')+'</textarea>'
+          +'<label>图片</label><div id="pageBlockImg_'+pIdx+'_'+bIdx+'"></div>'; break;
+      case 'double-image':
+        body='<div class="row2"><div><label>左图</label><div id="pageBlockImg1_'+pIdx+'_'+bIdx+'"></div></div><div><label>右图</label><div id="pageBlockImg2_'+pIdx+'_'+bIdx+'"></div></div></div>'; break;
+      case 'quote':
+        body='<label>引言文字</label><textarea onchange="DATA.pages['+pIdx+'].detail.blocks['+bIdx+'].text=this.value">'+(b.text||'')+'</textarea><label>作者</label><input value="'+(b.author||'')+'" onchange="DATA.pages['+pIdx+'].detail.blocks['+bIdx+'].author=this.value">'; break;
+    }
+    card.innerHTML=head+body;
+    container.appendChild(card);
+    (function(pi,bi,block){
+      setTimeout(function(){
+        if(block.type==='full-image'||block.type==='text-image'||block.type==='image-text'){
+          imgField('pageBlockImg_'+pi+'_'+bi,block.image,function(v){DATA.pages[pi].detail.blocks[bi].image=v;});
+        }else if(block.type==='double-image'){
+          imgField('pageBlockImg1_'+pi+'_'+bi,block.image1,function(v){DATA.pages[pi].detail.blocks[bi].image1=v;});
+          imgField('pageBlockImg2_'+pi+'_'+bi,block.image2,function(v){DATA.pages[pi].detail.blocks[bi].image2=v;});
+        }
+      },0);
+    })(pIdx,bIdx,b);
+  });
+}
+function addPageBlock(pIdx,type){
+  var blocks=DATA.pages[pIdx].detail.blocks;
+  var nb={type:type};
+  if(type==='text-image'||type==='image-text'){nb.title='小标题';nb.text='正文内容';nb.image='';}
+  else if(type==='full-image'){nb.image='';}
+  else if(type==='double-image'){nb.image1='';nb.image2='';}
+  else if(type==='quote'){nb.text='引言文字';nb.author='';}
+  blocks.push(nb);
+  renderPageBlocks(pIdx);
+}
+function delPageBlock(pIdx,bIdx){
+  if(confirm('确定删除这个模块？')){DATA.pages[pIdx].detail.blocks.splice(bIdx,1);renderPageBlocks(pIdx);}
+}
+function movePageBlock(pIdx,bIdx,dir){
+  var blocks=DATA.pages[pIdx].detail.blocks;
+  var t=bIdx+dir; if(t<0||t>=blocks.length)return;
+  var tmp=blocks[bIdx];blocks[bIdx]=blocks[t];blocks[t]=tmp;
+  renderPageBlocks(pIdx);
+}
 function collectData(){
   var h=DATA.home,c=DATA.site.contact;
   h.hero.title1=document.getElementById('heroTitle1').value;
@@ -949,6 +1093,26 @@ function loadStats(){
     <div class="modal-actions">
       <button onclick="closeModal('projectModal')">取消</button>
       <button class="primary" onclick="confirmAddProject()">确认添加</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pagesModal">
+  <div class="modal-box" style="width:640px">
+    <h3 id="pagesModalTitle">编辑单页</h3>
+    <input type="hidden" id="pageEditIdx">
+    <label>页面标题</label>
+    <input id="pageTitle" placeholder="如：商务会所方案汇报">
+    <label>副标题（可选，显示在标题下方）</label>
+    <input id="pageSubtitle" placeholder="如：2026年9月 · 方案阶段">
+    <label>链接后缀（不要改，自动生成）</label>
+    <input id="pageSlug" style="font-family:monospace;color:#6cf">
+    <div class="hint">完整链接：quyan.me/p/<span id="slugPreview"></span></div>
+    <label>内容（支持简单格式：# 标题、## 小标题、**粗体**、- 列表、![图片](图片链接)、--- 分割线）</label>
+    <textarea id="pageContent" rows="12" placeholder="在这里写内容..."></textarea>
+    <div class="modal-actions">
+      <button onclick="closeModal('pagesModal')">取消</button>
+      <button class="primary" onclick="savePageEdit()">保存</button>
     </div>
   </div>
 </div>

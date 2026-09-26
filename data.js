@@ -9,6 +9,43 @@ window.SITE_DATA = {
             "address": "吉林市"
         }
     },
+    "pages": [
+        {
+            "slug": "ufrdq9",
+            "title": "喜三胖门头",
+            "subtitle": "需要",
+            "detail": {
+                "heroImage": "uploads\/20260926_203542_14861e7a.jpg",
+                "description": "喜三胖店招5版方案效果图。",
+                "info": {
+                    "type": "效果图示意",
+                    "date": "260926"
+                },
+                "blocks": [
+                    {
+                        "type": "full-image",
+                        "image": "uploads\/20260926_203925_86cecf1e.png"
+                    },
+                    {
+                        "type": "full-image",
+                        "image": "uploads\/20260926_205932_fd7b468f.jpg"
+                    },
+                    {
+                        "type": "full-image",
+                        "image": "uploads\/20260926_205935_e5c75f0a.jpg"
+                    },
+                    {
+                        "type": "full-image",
+                        "image": "uploads\/20260926_205937_b75dfa8e.jpg"
+                    },
+                    {
+                        "type": "full-image",
+                        "image": "uploads\/20260926_205940_08e13ee6.jpg"
+                    }
+                ]
+            }
+        }
+    ],
     "home": {
         "hero": {
             "title1": "方寸之间",
